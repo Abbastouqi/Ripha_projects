@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>SmartAttendance Monitor</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Segoe UI', sans-serif;
+  background: #0b0d14;
+  color: #e2e8f0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Top bar ── */
+#topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 20px;
+  background: #141722;
+  border-bottom: 1px solid #1e2333;
+  flex-shrink: 0;
+}
+#topbar h1 { font-size: 1rem; font-weight: 700; color: #60a5fa; letter-spacing: .03em; }
+#srv-badge {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 0.78rem; color: #94a3b8;
+}
+#srv-dot { width: 8px; height: 8px; border-radius: 50%; background: #4b5563; }
+#srv-dot.ok  { background: #34d399; box-shadow: 0 0 6px #34d399; }
+#srv-dot.err { background: #f87171; }
+
+/* ── Main layout ── */
+#main {
+  display: flex; flex: 1; overflow: hidden; gap: 0;
+}
+
+/* ── Camera column ── */
+#cam-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: #000;
+  position: relative;
+  min-width: 0;
+}
+
+/* The actual camera image fills the box */
+#cam-stream {
+  width: 100%; height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+/* Overlay shown when stream is unavailable */
+#cam-offline {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  background: #0b0d14; color: #4b5563;
+  font-size: 1rem;
+  gap: 10px;
+}
+#cam-offline .icon { font-size: 3rem; }
+
+/* Big "currently seeing" banner at the bottom of the camera */
+#now-seeing {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  padding: 12px 20px;
+  display: flex; align-items: center; gap: 14px;
+  background: linear-gradient(transparent, rgba(0,0,0,0.85));
+  opacity: 0;
+  transition: opacity 0.4s;
+}
+#now-seeing.visible { opacity: 1; }
+#ns-avatar {
+  width: 48px; height: 48px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.4rem; font-weight: 800;
+  flex-shrink: 0;
+}
+#ns-name { font-size: 1.3rem; font-weight: 700; }
+#ns-sub  { font-size: 0.8rem; color: #94a3b8; margin-top: 2px; }
+#ns-tag  {
+  margin-left: auto;
+  padding: 4px 14px; border-radius: 20px;
+  font-size: 0.8rem; font-weight: 700;
+}
+
+/* LIVE badge */
+#live-badge {
+  position: absolute; top: 12px; left: 12px;
+  background: rgba(239,68,68,0.85);
+  color: #fff; font-size: 0.7rem; font-weight: 700;
+  padding: 3px 10px; border-radius: 20px;
+  letter-spacing: .08em;
+  display: none;
+}
+#live-badge.show { display: block; animation: blink 2s infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.5} }
+
+/* Help text overlay when no one detected */
+#cam-hint {
+  position: absolute; top: 12px; right: 12px;
+  background: rgba(0,0,0,0.6);
+  color: #94a3b8; font-size: 0.72rem;
+  padding: 5px 10px; border-radius: 6px;
+}
+
+/* ── Right sidebar ── */
+#sidebar {
+  width: 320px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid #1e2333;
+  overflow: hidden;
+}
+
+.sb-section {
+  border-bottom: 1px solid #1e2333;
+}
+.sb-header {
+  padding: 9px 14px;
+  font-size: 0.7rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .06em;
+  color: #64748b;
+  background: #0f1219;
+}
+
+/* IN right now */
+#presence-body {
+  overflow-y: auto;
+  max-height: 220px;
+}
+.p-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 14px;
+  border-bottom: 1px solid #1a1f2e;
+}
+.p-row:last-child { border: none; }
+.p-av {
+  width: 34px; height: 34px; border-radius: 50%;
+  background: #1d4ed8;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 800; font-size: 0.8rem; color: #bfdbfe;
+  flex-shrink: 0;
+}
+.p-name { font-size: 0.88rem; flex: 1; }
+.p-time { font-size: 0.72rem; color: #4b5563; }
+.p-dur  { font-size: 0.68rem; color: #34d399; }
+#in-count-badge {
+  display: inline-block;
+  background: #064e3b; color: #34d399;
+  border-radius: 12px; padding: 1px 8px; font-size: 0.75rem;
+  margin-left: 6px;
+}
+#p-empty {
+  padding: 14px; text-align: center;
+  font-size: 0.82rem; color: #374151;
+}
+
+/* Events feed */
+#events-body {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
+.ev-row {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 9px 14px;
+  border-bottom: 1px solid #1a1f2e;
+  animation: slideIn .25s ease;
+}
+@keyframes slideIn { from{opacity:0;transform:translateX(10px)} to{opacity:1} }
+.ev-icon { font-size: 1rem; margin-top:1px; flex-shrink:0; }
+.ev-name { font-size: 0.85rem; font-weight: 600; }
+.ev-detail { font-size: 0.72rem; color: #6b7280; margin-top:1px; }
+.ev-time { font-size: 0.68rem; color: #374151; margin-top:3px; }
+.tag { padding:2px 7px; border-radius:10px; font-size:0.62rem; font-weight:700; }
+.tag-in  { background:#065f46; color:#34d399; }
+.tag-out { background:#7f1d1d; color:#f87171; }
+.tag-unk { background:#78350f; color:#fbbf24; }
+
+/* Stats bar */
+#statsbar {
+  padding: 8px 14px;
+  display: flex; gap: 16px; flex-wrap: wrap;
+  font-size: 0.72rem; color: #4b5563;
+  border-top: 1px solid #1e2333;
+  background: #0b0d14;
+  flex-shrink: 0;
+}
+#statsbar span { color: #94a3b8; }
+</style>
+</head>
+<body>
+
+<!-- Top bar -->
+<div id="topbar">
+  <h1>SmartAttendance Monitor</h1>
+  <div id="srv-badge">
+    <div id="srv-dot"></div>
+    <span id="srv-txt">Connecting…</span>
+    <span id="enrolled-txt"></span>
+  </div>
+</div>
+
+<!-- Main -->
+<div id="main">
+
+  <!-- Camera column -->
+  <div id="cam-col">
+
+    <!-- MJPEG stream — browser handles this natively, no JS parsing needed -->
+    <img id="cam-stream" src="http://localhost:8000/stream"
+         onload="onStreamOk()" onerror="onStreamErr()">
+
+    <!-- Offline placeholder -->
+    <div id="cam-offline">
+      <div class="icon">📷</div>
+      <div>Camera feed not available</div>
+      <div style="font-size:.8rem;margin-top:4px">Make sure the server is running: <code>.\start.bat</code></div>
+    </div>
+
+    <!-- LIVE badge -->
+    <div id="live-badge">● LIVE</div>
+
+    <!-- Hint -->
+    <div id="cam-hint">Face boxes drawn by server</div>
+
+    <!-- Currently-seeing banner -->
+    <div id="now-seeing">
+      <div id="ns-avatar"></div>
+      <div>
+        <div id="ns-name"></div>
+        <div id="ns-sub"></div>
+      </div>
+      <div id="ns-tag" class="tag"></div>
+    </div>
+
+  </div>
+
+  <!-- Sidebar -->
+  <div id="sidebar">
+
+    <div class="sb-section">
+      <div class="sb-header">
+        Currently IN
+        <span id="in-count-badge">0</span>
+      </div>
+      <div id="presence-body">
+        <div id="p-empty">No one checked in yet</div>
+      </div>
+    </div>
+
+    <div class="sb-section" style="display:flex;flex-direction:column;flex:1;min-height:0">
+      <div class="sb-header">Live Events</div>
+      <div id="events-body">
+        <div style="padding:14px;text-align:center;font-size:.82rem;color:#374151">
+          Waiting for events…
+        </div>
+      </div>
+    </div>
+
+    <div id="statsbar">
+      <div>Enrolled: <span id="s-enrolled">—</span></div>
+      <div>Model: <span id="s-model">—</span></div>
+      <div>WS: <span id="s-ws">—</span></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const BASE = "http://localhost:8000";
+
+// ── Camera MJPEG stream ───────────────────────────────────────────────────────
+// The browser handles multipart/x-mixed-replace natively via <img src=...>
+// No JS parsing needed — just set src once and it keeps updating.
+
+const camStream  = document.getElementById("cam-stream");
+const camOffline = document.getElementById("cam-offline");
+const liveBadge  = document.getElementById("live-badge");
+let streamOk = false;
+
+function onStreamOk() {
+  streamOk = true;
+  camStream.style.display = "block";
+  camOffline.style.display = "none";
+  liveBadge.classList.add("show");
+}
+
+function onStreamErr() {
+  streamOk = false;
+  camStream.style.display = "none";
+  camOffline.style.display = "flex";
+  liveBadge.classList.remove("show");
+  // Retry stream every 3 seconds
+  setTimeout(() => {
+    camStream.src = BASE + "/stream?" + Date.now();
+  }, 3000);
+}
+
+// If stream stalls (no new bytes for 5s), reload it
+let streamWatchdog;
+function resetStreamWatchdog() {
+  clearTimeout(streamWatchdog);
+  streamWatchdog = setTimeout(() => {
+    if (streamOk) camStream.src = BASE + "/stream?" + Date.now();
+  }, 5000);
+}
+// Poll snapshot as a keep-alive heartbeat — also used to check if server is up
+function checkStream() {
+  fetch(BASE + "/snapshot", {method:"HEAD"}).then(() => {
+    resetStreamWatchdog();
+  }).catch(() => {});
+}
+setInterval(checkStream, 4000);
+
+
+// ── "Now seeing" banner ───────────────────────────────────────────────────────
+const nowSeeing = document.getElementById("now-seeing");
+const nsAvatar  = document.getElementById("ns-avatar");
+const nsName    = document.getElementById("ns-name");
+const nsSub     = document.getElementById("ns-sub");
+const nsTag     = document.getElementById("ns-tag");
+let bannerTimer;
+
+function showBanner(name, sub, tagText, tagClass, color) {
+  const initials = name.split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase();
+  nsAvatar.textContent = initials;
+  nsAvatar.style.background = color;
+  nsName.textContent   = name;
+  nsSub.textContent    = sub;
+  nsTag.textContent    = tagText;
+  nsTag.className      = "tag " + tagClass;
+  nowSeeing.classList.add("visible");
+  clearTimeout(bannerTimer);
+  bannerTimer = setTimeout(() => nowSeeing.classList.remove("visible"), 8000);
+}
+
+
+// ── WebSocket ─────────────────────────────────────────────────────────────────
+const sWs   = document.getElementById("s-ws");
+const srvDot = document.getElementById("srv-dot");
+const srvTxt = document.getElementById("srv-txt");
+
+let ws, wsRetry;
+
+function connectWS() {
+  ws = new WebSocket("ws://localhost:8000/ws/events");
+
+  ws.onopen = () => {
+    sWs.textContent = "Connected";
+    srvDot.className = "ok";
+    srvTxt.textContent = "Server online";
+  };
+
+  ws.onmessage = e => {
+    const evt = JSON.parse(e.data);
+
+    if (evt.type === "checkin") {
+      showBanner(
+        evt.person_name,
+        `Confidence: ${(evt.confidence*100).toFixed(1)}%  ·  ${evt.timestamp}`,
+        "CHECK IN", "tag-in", "#1d4ed8"
+      );
+      addEvent(evt);
+      refreshPresence();
+
+    } else if (evt.type === "checkout") {
+      showBanner(
+        evt.person_name,
+        `Was in for ${evt.absent_for_min} min  ·  ${evt.timestamp}`,
+        "CHECK OUT", "tag-out", "#7f1d1d"
+      );
+      addEvent(evt);
+      refreshPresence();
+
+    } else if (evt.type === "unknown_face") {
+      showBanner(
+        "Unknown Person",
+        "Not enrolled — run  enroll_unknown.py  to add",
+        "UNKNOWN", "tag-unk", "#78350f"
+      );
+      addEvent(evt);
+    }
+  };
+
+  ws.onclose = () => {
+    sWs.textContent = "Disconnected";
+    srvDot.className = "err";
+    srvTxt.textContent = "Reconnecting…";
+    wsRetry = setTimeout(connectWS, 3000);
+  };
+  ws.onerror = () => ws.close();
+}
+
+connectWS();
+
+
+// ── Events feed ───────────────────────────────────────────────────────────────
+const eventsBody = document.getElementById("events-body");
+
+function addEvent(evt) {
+  // Remove placeholder
+  const ph = eventsBody.querySelector("div[style]");
+  if (ph) ph.remove();
+
+  let icon, tag, detail;
+  if (evt.type === "checkin") {
+    icon   = "✅";
+    tag    = '<span class="tag tag-in">CHECK IN</span>';
+    detail = `Confidence: ${(evt.confidence*100).toFixed(1)}%`;
+  } else if (evt.type === "checkout") {
+    icon   = "🚪";
+    tag    = '<span class="tag tag-out">CHECK OUT</span>';
+    detail = `Away for ${evt.absent_for_min ?? 0} min`;
+  } else {
+    icon   = "❓";
+    tag    = '<span class="tag tag-unk">UNKNOWN</span>';
+    detail = "Unrecognised face";
+    evt.person_name = "Unknown";
+    evt.timestamp   = new Date().toLocaleTimeString();
+  }
+
+  const row = document.createElement("div");
+  row.className = "ev-row";
+  row.innerHTML = `
+    <div class="ev-icon">${icon}</div>
+    <div style="flex:1">
+      <div style="display:flex;align-items:center;gap:6px">
+        <span class="ev-name">${evt.person_name || "—"}</span>${tag}
+      </div>
+      <div class="ev-detail">${detail}</div>
+      <div class="ev-time">${evt.timestamp || ""}</div>
+    </div>`;
+  eventsBody.prepend(row);
+
+  while (eventsBody.children.length > 60) {
+    eventsBody.removeChild(eventsBody.lastChild);
+  }
+}
+
+
+// ── Presence list ─────────────────────────────────────────────────────────────
+const presenceBody   = document.getElementById("presence-body");
+const inCountBadge   = document.getElementById("in-count-badge");
+
+async function refreshPresence() {
+  try {
+    const res  = await fetch(BASE + "/presence");
+    if (!res.ok) return;
+    const list = await res.json();
+
+    inCountBadge.textContent = list.length;
+    presenceBody.innerHTML   = "";
+
+    if (list.length === 0) {
+      presenceBody.innerHTML = '<div id="p-empty">No one checked in yet</div>';
+      return;
+    }
+
+    list.forEach(p => {
+      const initials = p.name.split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase();
+      const row = document.createElement("div");
+      row.className = "p-row";
+      row.innerHTML = `
+        <div class="p-av">${initials}</div>
+        <div style="flex:1">
+          <div class="p-name">${p.name}</div>
+          <div class="p-time">In since ${p.checkin_at}</div>
+        </div>
+        <div class="p-dur">${p.duration_min}m</div>`;
+      presenceBody.appendChild(row);
+    });
+  } catch (_) {}
+}
+
+setInterval(refreshPresence, 5000);
+refreshPresence();
+
+
+// ── Health ─────────────────────────────────────────────────────────────────────
+async function checkHealth() {
+  try {
+    const h = await (await fetch(BASE + "/health")).json();
+    document.getElementById("s-enrolled").textContent = h.enrolled_faces;
+    document.getElementById("s-model").textContent    = h.model;
+    document.getElementById("enrolled-txt").textContent =
+      `· ${h.enrolled_faces} person(s) enrolled`;
+  } catch (_) {}
+}
+setInterval(checkHealth, 10000);
+checkHealth();
+</script>
+</body>
+</html>
