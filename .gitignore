@@ -1,50 +1,22 @@
 # Python
 __pycache__/
-*.py[cod]
+*.pyc
 *.pyo
 *.pyd
-*.so
-*.egg
-*.egg-info/
-dist/
-build/
-.eggs/
-
-# Virtual environment
+.venv/
 venv/
 env/
-.venv/
 
-# Environment secrets — NEVER commit real credentials
+# Secrets
 .env
 
-# Enrollment photos — keep folder structure, ignore actual images
-enroll_images/*
-!enroll_images/.gitkeep
-
-# Downloaded InsightFace models
-models/*
-!models/.gitkeep
-~/.insightface/
-
-# IDE
-.vscode/
-.idea/
-*.suo
-*.user
+# Runtime output
+*.mp4
+*.avi
+static/Profiles/
+static/OutputAudios/
+static/OutputVideos/
 
 # OS
-Thumbs.db
 .DS_Store
-desktop.ini
-
-# Logs
-*.log
-
-# Old / deprecated files at root (moved to scripts/ and client/)
-/tkinter_client.py
-/enroll_from_folder.py
-/enroll_unknown.py
-/monitor.html
-/supabase_schema.sql
-/supabase_schema_v2.sql
+Thumbs.db

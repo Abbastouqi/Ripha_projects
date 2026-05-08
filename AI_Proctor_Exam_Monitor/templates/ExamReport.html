@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exam Analysis Report — ProctorAI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: #f0f4f8;
+            color: #333;
+            min-height: 100vh;
+        }
+
+        /* ── Header ── */
+        .report-header {
+            background: linear-gradient(135deg, #3a7273 0%, #5f9ea0 100%);
+            color: #fff;
+            padding: 32px 0 24px;
+            text-align: center;
+        }
+        .report-header h1 { font-size: 26px; font-weight: 700; margin-bottom: 6px; }
+        .report-header p  { font-size: 14px; opacity: .85; }
+        .report-header .meta {
+            display: flex; justify-content: center; gap: 32px;
+            margin-top: 18px; font-size: 13px;
+        }
+        .report-header .meta span {
+            background: rgba(255,255,255,.15); padding: 5px 16px;
+            border-radius: 20px; font-weight: 600;
+        }
+
+        /* ── Loading state ── */
+        .loading-box {
+            max-width: 540px; margin: 60px auto; text-align: center;
+            background: #fff; border-radius: 18px; padding: 48px 32px;
+            box-shadow: 0 4px 24px rgba(0,0,0,.08);
+        }
+        .spinner {
+            width: 52px; height: 52px; border: 5px solid #e0f4f4;
+            border-top-color: #5f9ea0; border-radius: 50%;
+            animation: spin .8s linear infinite; margin: 0 auto 20px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .loading-box h3 { font-size: 18px; color: #5f9ea0; margin-bottom: 8px; }
+        .loading-box p  { font-size: 13px; color: #888; }
+        .progress-bar-wrap { background: #eee; border-radius: 8px; height: 8px; margin-top: 20px; overflow: hidden; }
+        .progress-bar-fill { height: 100%; background: #5f9ea0; border-radius: 8px; transition: width .5s; }
+
+        /* ── Main content ── */
+        .report-body { max-width: 860px; margin: 36px auto; padding: 0 16px 60px; }
+
+        /* ── Question card ── */
+        .q-card {
+            background: #fff; border-radius: 16px;
+            box-shadow: 0 2px 16px rgba(0,0,0,.07);
+            margin-bottom: 28px; overflow: hidden;
+        }
+        .q-card-header {
+            background: #f8fefe; border-bottom: 2px solid #e8f4f4;
+            padding: 16px 24px; display: flex; align-items: flex-start; gap: 12px;
+        }
+        .q-num-badge {
+            background: #5f9ea0; color: #fff; border-radius: 50%;
+            width: 34px; height: 34px; display: flex; align-items: center;
+            justify-content: center; font-size: 14px; font-weight: 700; flex-shrink: 0;
+        }
+        .q-text { font-size: 15px; font-weight: 600; color: #2c3e50; line-height: 1.5; }
+        .q-card-body { padding: 22px 24px; }
+
+        /* ── Answer boxes ── */
+        .answer-section { margin-bottom: 20px; }
+        .section-label {
+            font-size: 12px; font-weight: 700; text-transform: uppercase;
+            letter-spacing: .8px; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;
+        }
+        .section-label.student { color: #5f9ea0; }
+        .section-label.solution { color: #27ae60; }
+        .answer-box {
+            border-radius: 10px; padding: 14px 18px;
+            font-size: 14px; line-height: 1.7; white-space: pre-wrap;
+        }
+        .answer-box.student-ans {
+            background: #f8f9fa; border: 2px solid #dee2e6; color: #333;
+        }
+        .answer-box.solution-ans {
+            background: #f0fff4; border: 2px solid #c3e6cb; color: #155724;
+        }
+
+        /* ── Analysis section ── */
+        .analysis-section { margin-top: 20px; }
+        .analysis-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        @media(max-width: 600px) { .analysis-grid { grid-template-columns: 1fr; } }
+
+        .analysis-box {
+            border-radius: 12px; padding: 16px 18px;
+        }
+        .analysis-box.mistakes  { background: #fff5f5; border: 2px solid #f5c6cb; }
+        .analysis-box.strengths { background: #f0fff4; border: 2px solid #c3e6cb; }
+        .analysis-box h4 {
+            font-size: 13px; font-weight: 700; margin-bottom: 12px;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .analysis-box.mistakes  h4 { color: #c0392b; }
+        .analysis-box.strengths h4 { color: #27ae60; }
+        .analysis-list { list-style: none; padding: 0; }
+        .analysis-list li {
+            font-size: 13px; line-height: 1.6; padding: 6px 0;
+            border-bottom: 1px solid rgba(0,0,0,.06); display: flex; gap: 8px;
+        }
+        .analysis-list li:last-child { border-bottom: none; }
+        .analysis-list li::before { font-size: 14px; flex-shrink: 0; }
+        .mistakes  .analysis-list li::before { content: "✗"; color: #e74c3c; font-weight: 700; }
+        .strengths .analysis-list li::before { content: "✓"; color: #27ae60; font-weight: 700; }
+        .empty-note { font-size: 13px; color: #aaa; font-style: italic; }
+
+        /* ── Keyword analysis ── */
+        .keyword-section {
+            margin-top: 20px; padding: 18px 20px;
+            background: #fafbff; border: 2px solid #e0e8ff;
+            border-radius: 12px;
+        }
+        .keyword-section h4 {
+            font-size: 13px; font-weight: 700; color: #4a5568;
+            margin-bottom: 14px; display: flex; align-items: center; gap: 6px;
+        }
+        .kw-row { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 12px; }
+        .kw-tag {
+            display: inline-block; padding: 3px 12px;
+            border-radius: 14px; font-size: 12px; font-weight: 600;
+        }
+        .kw-tag.matched { background: #d4edda; color: #155724; border: 1.5px solid #a3d9a5; }
+        .kw-tag.missing { background: #f8d7da; color: #721c24; border: 1.5px solid #f5c6cb; }
+        .kw-label {
+            font-size: 12px; font-weight: 600; text-transform: uppercase;
+            letter-spacing: .6px; margin-bottom: 6px;
+        }
+        .kw-label.matched { color: #27ae60; }
+        .kw-label.missing { color: #e74c3c; }
+        .semantic-bar-wrap {
+            display: flex; align-items: center; gap: 12px; margin-top: 14px;
+        }
+        .semantic-label { font-size: 12px; font-weight: 700; color: #4a5568; white-space: nowrap; }
+        .semantic-track {
+            flex: 1; height: 10px; background: #e2e8f0; border-radius: 6px; overflow: hidden;
+        }
+        .semantic-fill {
+            height: 100%; border-radius: 6px;
+            transition: width 1s ease;
+        }
+        .semantic-pct { font-size: 13px; font-weight: 700; color: #3a7273; white-space: nowrap; }
+
+        /* ── Pending badge ── */
+        .pending-badge {
+            display: inline-flex; align-items: center; gap: 6px;
+            background: #fff3cd; color: #856404; padding: 8px 16px;
+            border-radius: 20px; font-size: 13px; font-weight: 600;
+            border: 1.5px solid #ffc107;
+        }
+        .pending-dot {
+            width: 8px; height: 8px; border-radius: 50%; background: #ffc107;
+            animation: pulse 1s infinite;
+        }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+        /* ── Action buttons ── */
+        .action-bar {
+            display: flex; justify-content: center; gap: 14px;
+            margin: 32px auto 0; flex-wrap: wrap;
+        }
+        .done-btn, .pdf-btn {
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 13px 28px; border: none; border-radius: 30px;
+            font-size: 14px; font-weight: 700; cursor: pointer;
+            text-decoration: none; transition: opacity .2s;
+        }
+        .done-btn { background: #5f9ea0; color: #fff; }
+        .pdf-btn  { background: #e74c3c; color: #fff; }
+        .done-btn:hover, .pdf-btn:hover { opacity: .88; }
+
+        /* ── Print / PDF styles ── */
+        @media print {
+            body { background: #fff; }
+            .report-header {
+                background: #3a7273 !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+                color: #fff !important;
+            }
+            .action-bar, #loadingBox { display: none !important; }
+            .q-card {
+                box-shadow: none !important;
+                border: 1px solid #ddd;
+                break-inside: avoid;
+                page-break-inside: avoid;
+            }
+            .report-body { max-width: 100%; margin: 0; padding: 0 10px; }
+            .analysis-box.mistakes  { background: #fff5f5 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .analysis-box.strengths { background: #f0fff4 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .answer-box.student-ans { background: #f8f9fa !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .answer-box.solution-ans { background: #f0fff4 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .kw-tag.matched { background: #d4edda !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .kw-tag.missing { background: #f8d7da !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .keyword-section { background: #fafbff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .semantic-fill { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="report-header">
+    <h1>&#128196; Exam Analysis Report</h1>
+    <p>AI-reviewed answers — focus on learning, not scores.</p>
+    <div class="meta">
+        <span>&#128218; {{ exam_title }}</span>
+        <span>&#128100; {{ student_name }}</span>
+        <span>&#128203; {{ answers|length }} Subjective Question{{ 's' if answers|length != 1 else '' }}</span>
+        {% set graded_count = answers | selectattr('graded') | list | length %}
+        {% if graded_count == answers|length and answers|length > 0 %}
+        <span>&#127775; {{ total_score }} / {{ total_marks }} marks (subjective)</span>
+        {% endif %}
+        {% if is_mixed and mcq_score is defined %}
+        <span>&#9989; MCQ: {{ mcq_score }} correct</span>
+        {% endif %}
+    </div>
+    {% if graded_count == answers|length and answers|length > 0 %}
+    <div style="margin-top:16px;">
+        <button class="pdf-btn" onclick="downloadPDF()" style="margin:0 auto;">
+            &#128438; Download PDF Report
+        </button>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Loading state (shown while grading in background) -->
+<div class="loading-box" id="loadingBox" style="display:none;">
+    <div class="spinner"></div>
+    <h3>AI is analysing your answers…</h3>
+    <p>This usually takes 20–40 seconds. Please wait.</p>
+    <div class="progress-bar-wrap">
+        <div class="progress-bar-fill" id="progressFill" style="width:0%"></div>
+    </div>
+    <p style="margin-top:10px;font-size:12px;color:#aaa;" id="progressText">0 / {{ answers|length }} graded</p>
+</div>
+
+<!-- Report content -->
+<div class="report-body" id="reportBody">
+    {% for ans in answers %}
+    <div class="q-card" id="qcard{{ ans.index }}">
+        <div class="q-card-header">
+            <div class="q-num-badge">{{ ans.index }}</div>
+            <div class="q-text">{{ ans.question }}</div>
+        </div>
+        <div class="q-card-body">
+
+            <!-- Student's answer -->
+            <div class="answer-section">
+                <div class="section-label student">&#9998; Your Answer</div>
+                <div class="answer-box student-ans">{{ ans.student_answer if ans.student_answer else '— No answer provided —' }}</div>
+            </div>
+
+            {% if ans.graded %}
+            <!-- AI Solution -->
+            <div class="answer-section">
+                <div class="section-label solution">&#10003; Model Solution</div>
+                <div class="answer-box solution-ans">{{ ans.solution }}</div>
+            </div>
+
+            <!-- Analysis -->
+            <div class="analysis-section">
+                <div class="analysis-grid">
+                    <!-- Mistakes -->
+                    <div class="analysis-box mistakes">
+                        <h4>&#10060; Mistakes / Missing Points</h4>
+                        {% if ans.mistakes %}
+                            <ul class="analysis-list">
+                                {% for m in ans.mistakes %}
+                                <li>{{ m }}</li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <p class="empty-note">No mistakes found — well done!</p>
+                        {% endif %}
+                    </div>
+                    <!-- Strengths -->
+                    <div class="analysis-box strengths">
+                        <h4>&#9989; What You Got Right</h4>
+                        {% if ans.correct_points %}
+                            <ul class="analysis-list">
+                                {% for c in ans.correct_points %}
+                                <li>{{ c }}</li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <p class="empty-note">Keep practising — review the model solution above.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Keyword + Semantic Analysis -->
+            {% if ans.matching_keywords or ans.missing_keywords or ans.semantic_score %}
+            <div class="keyword-section">
+                <h4>&#128269; Keyword &amp; Semantic Analysis</h4>
+
+                {% if ans.matching_keywords %}
+                <div class="kw-label matched">&#10003; Keywords You Covered</div>
+                <div class="kw-row">
+                    {% for kw in ans.matching_keywords %}
+                    <span class="kw-tag matched">{{ kw }}</span>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                {% if ans.missing_keywords %}
+                <div class="kw-label missing" style="margin-top:10px;">&#10005; Missing Keywords</div>
+                <div class="kw-row">
+                    {% for kw in ans.missing_keywords %}
+                    <span class="kw-tag missing">{{ kw }}</span>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                {% if ans.semantic_score is defined %}
+                <div class="semantic-bar-wrap">
+                    <span class="semantic-label">Semantic Match</span>
+                    <div class="semantic-track">
+                        <div class="semantic-fill" style="width:{{ ans.semantic_score }}%; background: {% if ans.semantic_score >= 70 %}#27ae60{% elif ans.semantic_score >= 40 %}#f39c12{% else %}#e74c3c{% endif %};"></div>
+                    </div>
+                    <span class="semantic-pct">{{ ans.semantic_score }}%</span>
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            {% else %}
+            <!-- Still grading -->
+            <div style="margin-top:14px;">
+                <span class="pending-badge">
+                    <span class="pending-dot"></span>
+                    AI analysis in progress…
+                </span>
+            </div>
+            {% endif %}
+
+        </div>
+    </div>
+    {% endfor %}
+
+    <div class="action-bar">
+        <a href="/student/dashboard" class="done-btn">&#8592; Back to Dashboard</a>
+        {% set graded_count = answers | selectattr('graded') | list | length %}
+        {% if graded_count == answers|length and answers|length > 0 %}
+        <button class="pdf-btn" onclick="downloadPDF()">&#128438; Download PDF</button>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+function downloadPDF() {
+    var title = '{{ exam_title|replace("'", "\\'") }} — {{ student_name|replace("'", "\\'") }} — Analysis Report';
+    document.title = title;
+    window.print();
+}
+
+// Check if any answers are still pending grading — if so, poll until ready
+var totalQ  = {{ answers|length }};
+var pendingCount = {{ answers | selectattr('graded', 'equalto', false) | list | length }};
+
+if (pendingCount > 0) {
+    document.getElementById('loadingBox').style.display = 'block';
+    document.getElementById('reportBody').style.display = 'none';
+    pollGrading();
+}
+
+function pollGrading() {
+    fetch('/api/exam/report/{{ submission_id }}/status')
+        .then(function(r){ return r.json(); })
+        .then(function(d) {
+            var pct = d.total ? (d.graded / d.total * 100) : 0;
+            document.getElementById('progressFill').style.width = pct + '%';
+            document.getElementById('progressText').textContent = d.graded + ' / ' + d.total + ' graded';
+            if (d.ready) {
+                // Reload to show the graded report
+                window.location.reload();
+            } else {
+                setTimeout(pollGrading, 4000);
+            }
+        })
+        .catch(function(){ setTimeout(pollGrading, 5000); });
+}
+</script>
+
+</body>
+</html>

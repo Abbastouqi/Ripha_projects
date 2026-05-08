@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Exams — ProctorAI</title>
+    <link href="https://unpkg.com/boxicons@2.0.9/css/boxicons.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{url_for('static', filename='css/TrStudent.css')}}">
+    <style>
+        /* ── modal overlay ── */
+        .modal-overlay {
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,.55); z-index: 5000;
+            justify-content: center; align-items: flex-start;
+            padding: 40px 16px; overflow-y: auto;
+        }
+        .modal-overlay.open { display: flex; }
+        .modal-box {
+            background: #fff; border-radius: 18px; width: 100%;
+            max-width: 680px; padding: 30px; position: relative;
+        }
+        .modal-box h2 { font-size: 20px; margin-bottom: 20px; color: #342E37; }
+        .modal-close {
+            position: absolute; top: 16px; right: 20px;
+            font-size: 26px; color: #aaa; cursor: pointer; line-height: 1;
+            background: none; border: none;
+        }
+        .form-row { margin-bottom: 16px; }
+        .form-row label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 5px; color: #555; }
+        .form-row input, .form-row select {
+            width: 100%; padding: 10px 14px; border: 2px solid #e0e0e0;
+            border-radius: 10px; font-size: 14px; outline: none; transition: border .2s;
+        }
+        .form-row input:focus, .form-row select:focus { border-color: #5f9ea0; }
+        .form-row-inline { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+        /* ── question builder ── */
+        .q-block {
+            border: 2px solid #eee; border-radius: 12px; padding: 16px;
+            margin-bottom: 16px; position: relative;
+        }
+        .q-block .q-num {
+            font-size: 12px; font-weight: 700; color: #5f9ea0;
+            text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px;
+        }
+        .q-block .remove-q {
+            position: absolute; top: 12px; right: 14px;
+            background: none; border: none; color: #e74c3c;
+            font-size: 20px; cursor: pointer;
+        }
+        .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+        .option-row { display: flex; align-items: center; gap: 8px; }
+        .option-row input[type="text"] { flex: 1; padding: 7px 10px; border: 1.5px solid #ddd; border-radius: 8px; font-size: 13px; }
+        .option-row input[type="radio"] { width: 16px; height: 16px; accent-color: #5f9ea0; cursor: pointer; }
+        .option-label { font-size: 13px; font-weight: 600; color: #777; min-width: 20px; }
+
+        .btn-add-q {
+            width: 100%; padding: 11px; border: 2px dashed #5f9ea0;
+            background: #f0fafa; color: #5f9ea0; border-radius: 10px;
+            font-size: 14px; font-weight: 600; cursor: pointer; transition: background .2s;
+        }
+        .btn-add-q:hover { background: #e0f4f4; }
+
+        .btn-save {
+            width: 100%; padding: 13px; background: #5f9ea0; color: #fff;
+            border: none; border-radius: 30px; font-size: 15px; font-weight: 700;
+            cursor: pointer; margin-top: 18px; transition: opacity .2s;
+        }
+        .btn-save:hover { opacity: .88; }
+        #createMsg { margin-top: 10px; font-size: 13px; text-align: center; }
+
+        /* ── exam type tabs ── */
+        .type-tabs { display: flex; gap: 8px; margin-bottom: 20px; }
+        .type-tab {
+            flex: 1; padding: 10px; border: 2px solid #e0e0e0; border-radius: 10px;
+            background: #fff; font-size: 13px; font-weight: 600; cursor: pointer;
+            color: #999; transition: all .2s; text-align: center;
+        }
+        .type-tab.active { border-color: #5f9ea0; background: #e8f7f7; color: #5f9ea0; }
+
+        /* ── upload zone ── */
+        .upload-zone {
+            border: 2px dashed #5f9ea0; border-radius: 12px;
+            padding: 32px; text-align: center; cursor: pointer;
+            background: #f8fefe; transition: background .2s; position: relative;
+        }
+        .upload-zone:hover { background: #e8f7f7; }
+        .upload-zone input[type="file"] {
+            position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%;
+        }
+        .upload-zone i { font-size: 36px; color: #5f9ea0; display: block; margin-bottom: 8px; }
+        .upload-zone p { margin: 0; color: #666; font-size: 13px; }
+        .upload-zone strong { color: #5f9ea0; }
+
+        /* ── extracted questions preview ── */
+        .ext-q-block {
+            border: 2px solid #eee; border-radius: 10px; padding: 14px;
+            margin-bottom: 10px; display: flex; align-items: flex-start; gap: 12px;
+        }
+        .ext-q-block .q-txt { flex: 1; font-size: 13px; color: #333; line-height: 1.5; }
+        .ext-q-marks {
+            width: 70px; padding: 6px 8px; border: 1.5px solid #ddd; border-radius: 8px;
+            font-size: 13px; text-align: center;
+        }
+        .ext-q-del {
+            background: none; border: none; color: #e74c3c;
+            font-size: 20px; cursor: pointer; padding: 0 4px; line-height: 1;
+        }
+        #uploadMsg { margin: 10px 0; font-size: 13px; }
+        .btn-upload {
+            width: 100%; padding: 11px; border: none; border-radius: 10px;
+            background: #5f9ea0; color: #fff; font-size: 14px; font-weight: 600;
+            cursor: pointer; margin-bottom: 10px; transition: opacity .2s;
+        }
+        .btn-upload:hover { opacity: .88; }
+        .btn-upload:disabled { opacity: .5; cursor: not-allowed; }
+
+        /* ── exams table extras ── */
+        .code-pill {
+            display: inline-block; padding: 3px 12px;
+            background: #e8f7f7; color: #5f9ea0;
+            border-radius: 20px; font-size: 12px; font-weight: 700; letter-spacing: .5px;
+        }
+        /* Override TrStudent.css which resets all td>button to white/25px */
+        .btn-sm {
+            padding: 5px 14px !important; border-radius: 20px !important; border: none !important;
+            font-size: 12px !important; font-weight: 600 !important; cursor: pointer !important;
+            transition: opacity .2s; white-space: nowrap;
+        }
+        .btn-sm:hover { opacity: .8; }
+        .btn-view { background: #5f9ea0 !important; color: #fff !important; }
+        .btn-del  { background: #e74c3c !important; color: #fff !important; }
+        .new-exam-btn {
+            padding: 11px 24px; background: #5f9ea0; color: #fff;
+            border: none; border-radius: 30px; font-size: 14px;
+            font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px;
+        }
+
+        /* ── submissions modal ── */
+        .sub-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .sub-table th { padding: 8px; text-align: left; border-bottom: 2px solid #eee; white-space: nowrap; }
+        .sub-table td { padding: 10px 8px; border-bottom: 1px solid #f5f5f5; white-space: nowrap; }
+        .pass { color: #27ae60; font-weight: 700; }
+        .fail { color: #e74c3c; font-weight: 700; }
+
+        /* ── violations modal ── */
+        .viol-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .viol-table th { padding: 8px 10px; background: #f5f5f5; text-align: left; font-weight: 600; border-bottom: 2px solid #ddd; }
+        .viol-table td { padding: 9px 10px; border-bottom: 1px solid #f0f0f0; }
+        .viol-badge { display: inline-block; padding: 2px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+        .viol-badge.high { background: #fde8e8; color: #c0392b; }
+        .viol-badge.med  { background: #fef3cd; color: #d68910; }
+        .no-viols { text-align:center; padding: 28px; color: #aaa; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <!-- SIDEBAR -->
+    <section id="sidebar">
+        <a href="#" class="brand">
+            <i class='bx bxs-shield-alt-2'></i>
+            <span class="text">ProctorAI</span>
+        </a>
+        <ul class="side-menu top">
+            <li>
+                <a href="/teacher/dashboard">
+                    <i class='bx bxs-dashboard'></i>
+                    <span class="text">Dashboard</span>
+                </a>
+            </li>
+            <li class="active">
+                <a href="/teacher/exams">
+                    <i class='bx bxs-book-alt'></i>
+                    <span class="text">My Exams</span>
+                </a>
+            </li>
+            <li>
+                <a href="/logout">
+                    <i class='bx bxs-log-out-circle'></i>
+                    <span class="text">Logout</span>
+                </a>
+            </li>
+        </ul>
+    </section>
+
+    <!-- CONTENT -->
+    <section id="content">
+        <nav>
+            <i class='bx bx-menu'></i>
+            <span class="text">ProctorAI — My Exams</span>
+        </nav>
+
+        <main>
+            <div class="head-title">
+                <div class="left">
+                    <h1>My Exams</h1>
+                    <ul class="breadcrumb">
+                        <li><a href="/teacher/dashboard">Dashboard</a></li>
+                        <li><i class='bx bx-chevron-right'></i></li>
+                        <li><a class="active" href="#">Exams</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="table-data">
+                <div class="record" style="flex-basis:100%;">
+                    <div class="head">
+                        <h3>Exam List</h3>
+                        <button class="new-exam-btn" onclick="openCreateModal()">
+                            <i class='bx bx-plus'></i> New Exam
+                        </button>
+                    </div>
+
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Title</th>
+                                <th>Code</th>
+                                <th>Course</th>
+                                <th>Duration</th>
+                                <th>Questions</th>
+                                <th>Created</th>
+                                <th style="min-width:175px;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if exams %}
+                                {% for e in exams %}
+                                <tr>
+                                    <td><strong>{{ e.title }}</strong></td>
+                                    <td><span class="code-pill">{{ e.exam_code }}</span></td>
+                                    <td>{{ e.course_code or '—' }}</td>
+                                    <td>{{ e.duration }} min</td>
+                                    <td>{{ e.question_count }}</td>
+                                    <td>{{ e.created_at[:10] }}</td>
+                                    <td>
+                                        <div style="display:flex;gap:6px;align-items:center;">
+                                            <button class="btn-sm btn-view" onclick="loadSubmissions({{ e.id }}, '{{ e.title }}')">
+                                                <i class='bx bxs-bar-chart-alt-2'></i> Results
+                                            </button>
+                                            <button class="btn-sm btn-del" onclick="deleteExam({{ e.id }}, this)">
+                                                <i class='bx bx-trash'></i> Delete
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="7" style="text-align:center;color:#aaa;padding:36px;">
+                                        No exams yet. Click <strong>New Exam</strong> to create one.
+                                    </td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </section>
+
+    <!-- ═══ CREATE EXAM MODAL ═══ -->
+    <div class="modal-overlay" id="createModal">
+        <div class="modal-box">
+            <button class="modal-close" onclick="closeModal('createModal')">&times;</button>
+            <h2><i class='bx bx-plus-circle' style="color:#5f9ea0"></i> Create New Exam</h2>
+
+            <!-- Shared fields -->
+            <div class="form-row-inline">
+                <div class="form-row">
+                    <label>Exam Title *</label>
+                    <input type="text" id="eTitle" placeholder="e.g. Midterm Python Exam">
+                </div>
+                <div class="form-row">
+                    <label>Course Code</label>
+                    <input type="text" id="eCourse" placeholder="e.g. CS-101">
+                </div>
+            </div>
+            <div class="form-row" style="max-width:200px;">
+                <label>Duration (minutes) *</label>
+                <input type="number" id="eDuration" value="60" min="5" max="300">
+            </div>
+
+            <hr style="margin:16px 0;border:none;border-top:2px solid #eee;">
+
+            <!-- Exam type tabs -->
+            <div class="type-tabs">
+                <button class="type-tab active" id="tabMCQ" onclick="switchTab('mcq')">
+                    <i class='bx bx-list-check'></i> MCQ Questions
+                </button>
+                <button class="type-tab" id="tabSubjective" onclick="switchTab('subjective')">
+                    <i class='bx bx-file'></i> Subjective Only
+                </button>
+                <button class="type-tab" id="tabMixed" onclick="switchTab('mixed')">
+                    <i class='bx bx-intersect'></i> MCQ + Subjective
+                </button>
+            </div>
+
+            <!-- MCQ panel -->
+            <div id="panelMCQ">
+                <p style="font-weight:700;font-size:14px;color:#555;margin-bottom:12px;">
+                    MCQ Questions <span id="qCount" style="color:#5f9ea0;">(0)</span>
+                </p>
+                <div id="questionsContainer"></div>
+                <button class="btn-add-q" onclick="addQuestion()">
+                    <i class='bx bx-plus'></i> Add Question
+                </button>
+            </div>
+
+            <!-- Subjective / Upload panel -->
+            <div id="panelSubjective" style="display:none;">
+                <div class="upload-zone" id="uploadZone">
+                    <input type="file" id="paperFile" accept=".pdf,.docx" onchange="onFileSelected(this)">
+                    <i class='bx bx-cloud-upload'></i>
+                    <p><strong>Click to upload</strong> or drag & drop</p>
+                    <p style="margin-top:4px;color:#aaa;font-size:12px;">PDF or Word (.docx) — questions will be extracted automatically</p>
+                </div>
+                <div id="uploadMsg"></div>
+                <button class="btn-upload" id="btnExtract" onclick="extractQuestions()" disabled>
+                    <i class='bx bx-magic-wand'></i> Extract Questions with AI
+                </button>
+                <div id="extractedContainer" style="display:none;">
+                    <p style="font-weight:700;font-size:14px;color:#555;margin:12px 0 8px;">
+                        Extracted Questions <span id="extQCount" style="color:#5f9ea0;"></span>
+                        <span style="font-size:12px;color:#aaa;font-weight:400;"> — Edit marks if needed</span>
+                    </p>
+                    <div id="extractedQuestions"></div>
+                </div>
+            </div>
+
+            <!-- Mixed panel: MCQ builder + subjective upload side by side -->
+            <div id="panelMixed" style="display:none;">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+
+                    <!-- Left: MCQ -->
+                    <div style="border:2px solid #e8f4f4;border-radius:12px;padding:16px;">
+                        <p style="font-weight:700;font-size:14px;color:#5f9ea0;margin-bottom:10px;">
+                            <i class='bx bx-list-check'></i> MCQ Questions
+                            <span id="qCountMixed" style="color:#aaa;font-weight:400;">(0)</span>
+                        </p>
+                        <div id="questionsContainerMixed"></div>
+                        <button class="btn-add-q" onclick="addQuestionMixed()" style="margin-top:8px;">
+                            <i class='bx bx-plus'></i> Add MCQ
+                        </button>
+                    </div>
+
+                    <!-- Right: Subjective upload -->
+                    <div style="border:2px solid #fef0e6;border-radius:12px;padding:16px;">
+                        <p style="font-weight:700;font-size:14px;color:#d35400;margin-bottom:10px;">
+                            <i class='bx bx-file'></i> Subjective Section
+                            <span id="subjCountMixed" style="color:#aaa;font-weight:400;">(0 questions)</span>
+                        </p>
+                        <div class="upload-zone" id="uploadZoneMixed" style="padding:18px;">
+                            <input type="file" id="paperFileMixed" accept=".pdf,.docx" onchange="onFileSelectedMixed(this)">
+                            <i class='bx bx-cloud-upload'></i>
+                            <p style="font-size:13px;"><strong>Upload paper</strong></p>
+                            <p style="font-size:11px;color:#aaa;">PDF or Word (.docx)</p>
+                        </div>
+                        <div id="uploadMsgMixed"></div>
+                        <button class="btn-upload" id="btnExtractMixed" onclick="extractQuestionsMixed()" disabled
+                                style="margin-top:8px;font-size:12px;padding:8px 14px;">
+                            <i class='bx bx-magic-wand'></i> Extract with AI
+                        </button>
+                        <div id="extractedContainerMixed" style="display:none;margin-top:10px;">
+                            <div id="extractedQuestionsMixed"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="createMsg"></div>
+            <button class="btn-save" onclick="saveExam()">Create Exam</button>
+        </div>
+    </div>
+
+    <!-- ═══ SUBMISSIONS MODAL ═══ -->
+    <div class="modal-overlay" id="subModal">
+        <div class="modal-box" style="max-width:800px;">
+            <button class="modal-close" onclick="closeModal('subModal')">&times;</button>
+            <h2 id="subModalTitle">Submissions</h2>
+            <div id="subContent">
+                <p style="text-align:center;color:#aaa;">Loading…</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ VIOLATIONS MODAL ═══ -->
+    <div class="modal-overlay" id="violModal">
+        <div class="modal-box" style="max-width:680px;">
+            <button class="modal-close" onclick="closeModal('violModal')">&times;</button>
+            <h2 id="violModalTitle" style="color:#e74c3c;">
+                <i class='bx bx-shield-x' style="vertical-align:middle;margin-right:6px;"></i>AI Violations Report
+            </h2>
+            <div id="violContent">
+                <p style="text-align:center;color:#aaa;">Loading…</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ── sidebar toggle ──
+        const toggle = document.querySelector('#content nav .bx-menu');
+        const sidebar = document.getElementById('sidebar');
+        if (toggle) toggle.addEventListener('click', () => sidebar.classList.toggle('hide'));
+
+        // ── modal helpers ──
+        function openCreateModal() { document.getElementById('createModal').classList.add('open'); }
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('open');
+            if (id === 'createModal') resetCreateForm();
+        }
+        document.querySelectorAll('.modal-overlay').forEach(m => {
+            m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
+        });
+
+        let _currentTab = 'mcq';
+        let _extractedQuestionsMixed = [];
+        let _mcqCounterMixed = 0;
+
+        function switchTab(tab) {
+            _currentTab = tab;
+            document.getElementById('panelMCQ').style.display        = tab === 'mcq'  ? '' : 'none';
+            document.getElementById('panelSubjective').style.display  = tab === 'subjective' ? '' : 'none';
+            document.getElementById('panelMixed').style.display       = tab === 'mixed' ? '' : 'none';
+            ['tabMCQ','tabSubjective','tabMixed'].forEach(id => document.getElementById(id).classList.remove('active'));
+            document.getElementById(tab === 'mcq' ? 'tabMCQ' : tab === 'subjective' ? 'tabSubjective' : 'tabMixed').classList.add('active');
+        }
+
+        function resetCreateForm() {
+            document.getElementById('eTitle').value = '';
+            document.getElementById('eCourse').value = '';
+            document.getElementById('eDuration').value = '60';
+            document.getElementById('questionsContainer').innerHTML = '';
+            document.getElementById('questionsContainerMixed').innerHTML = '';
+            document.getElementById('qCount').textContent = '(0)';
+            document.getElementById('qCountMixed').textContent = '(0)';
+            document.getElementById('subjCountMixed').textContent = '(0 questions)';
+            document.getElementById('createMsg').innerHTML = '';
+            document.getElementById('uploadMsg').innerHTML = '';
+            document.getElementById('uploadMsgMixed').innerHTML = '';
+            document.getElementById('extractedContainer').style.display = 'none';
+            document.getElementById('extractedContainerMixed').style.display = 'none';
+            document.getElementById('extractedQuestions').innerHTML = '';
+            document.getElementById('extractedQuestionsMixed').innerHTML = '';
+            document.getElementById('paperFile').value = '';
+            document.getElementById('paperFileMixed').value = '';
+            document.getElementById('btnExtract').disabled = true;
+            document.getElementById('btnExtractMixed').disabled = true;
+            _extractedQuestions = [];
+            _extractedQuestionsMixed = [];
+            _mcqCounterMixed = 0;
+            switchTab('mcq');
+        }
+
+        // ── Mixed panel: MCQ builder ──
+        function addQuestionMixed() {
+            _mcqCounterMixed++;
+            const n = _mcqCounterMixed;
+            const container = document.getElementById('questionsContainerMixed');
+            const div = document.createElement('div');
+            div.className = 'q-block'; div.id = 'qblockM' + n;
+            div.innerHTML = `
+                <div class="q-block-head">
+                    <span style="font-weight:700;font-size:13px;color:#5f9ea0;">Q${n}</span>
+                    <button class="q-del-btn" onclick="this.closest('.q-block').remove();updateQCountMixed()">✕</button>
+                </div>
+                <input class="q-input" id="qM${n}text" placeholder="Question text" oninput="updateQCountMixed()">
+                <div class="choices-grid">
+                    <input class="q-input" id="qM${n}opt0" placeholder="Option A">
+                    <input class="q-input" id="qM${n}opt1" placeholder="Option B">
+                    <input class="q-input" id="qM${n}opt2" placeholder="Option C">
+                    <input class="q-input" id="qM${n}opt3" placeholder="Option D">
+                </div>
+                <div class="correct-row">
+                    Correct: &nbsp;
+                    ${['A','B','C','D'].map((l,i)=>`<label><input type="radio" name="correctM_${n}" value="${i}"> ${l}</label>`).join(' ')}
+                </div>`;
+            container.appendChild(div);
+            updateQCountMixed();
+        }
+        function updateQCountMixed() {
+            const n = document.querySelectorAll('#questionsContainerMixed .q-block').length;
+            document.getElementById('qCountMixed').textContent = `(${n})`;
+        }
+
+        // ── Mixed panel: subjective upload ──
+        function onFileSelectedMixed(input) {
+            document.getElementById('btnExtractMixed').disabled = !input.files.length;
+            document.getElementById('uploadMsgMixed').innerHTML = input.files.length
+                ? `<p style="color:#27ae60;font-size:12px;margin-top:6px;">📎 ${input.files[0].name}</p>` : '';
+        }
+        async function extractQuestionsMixed() {
+            const file = document.getElementById('paperFileMixed').files[0];
+            const msgEl = document.getElementById('uploadMsgMixed');
+            if (!file) { msgEl.innerHTML = '<p style="color:#e74c3c;font-size:12px;">Please select a file first.</p>'; return; }
+            msgEl.innerHTML = '<p style="color:#5f9ea0;font-size:12px;">⏳ Extracting questions with AI…</p>';
+            document.getElementById('btnExtractMixed').disabled = true;
+            const fd = new FormData(); fd.append('paper', file);
+            try {
+                const res = await fetch('/api/teacher/upload-paper', { method: 'POST', body: fd });
+                const data = await res.json();
+                document.getElementById('btnExtractMixed').disabled = false;
+                if (data.error) {
+                    msgEl.innerHTML = `<p style="color:#e74c3c;font-size:12px;font-weight:600;">✗ ${data.error}</p>`;
+                    return;
+                }
+                _extractedQuestionsMixed = data.questions || [];
+                document.getElementById('subjCountMixed').textContent = `(${_extractedQuestionsMixed.length} questions)`;
+                msgEl.innerHTML = `<p style="color:#27ae60;font-size:12px;">✓ ${_extractedQuestionsMixed.length} questions extracted</p>`;
+                const cont = document.getElementById('extractedContainerMixed');
+                const qDiv = document.getElementById('extractedQuestionsMixed');
+                qDiv.innerHTML = '';
+                _extractedQuestionsMixed.forEach((q, i) => {
+                    qDiv.innerHTML += `<div class="ext-q-block" id="extMQ${i}">
+                        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
+                            <span style="font-size:12px;font-weight:600;color:#d35400;">${i+1}.</span>
+                            <span style="flex:1;font-size:12px;">${q.title}</span>
+                            <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+                                <input type="number" value="${q.marks}" min="1" max="100" style="width:52px;padding:3px 6px;border:1.5px solid #ddd;border-radius:6px;font-size:12px;"
+                                    onchange="_extractedQuestionsMixed[${i}].marks=parseInt(this.value)||1">
+                                <span style="font-size:11px;color:#aaa;">marks</span>
+                                <button onclick="document.getElementById('extMQ${i}').remove();_extractedQuestionsMixed.splice(${i},1);document.getElementById('subjCountMixed').textContent='('+_extractedQuestionsMixed.length+' questions)'"
+                                    style="background:#fee;border:none;border-radius:6px;color:#e74c3c;cursor:pointer;padding:2px 7px;font-size:13px;">✕</button>
+                            </div>
+                        </div>
+                    </div>`;
+                });
+                cont.style.display = '';
+            } catch(err) {
+                document.getElementById('btnExtractMixed').disabled = false;
+                msgEl.innerHTML = `<p style="color:#e74c3c;font-size:12px;font-weight:600;">✗ Network error. Please try again.</p>`;
+            }
+        }
+
+        // ── Upload paper ──
+        let _extractedQuestions = [];
+
+        function onFileSelected(input) {
+            const btn = document.getElementById('btnExtract');
+            const msg = document.getElementById('uploadMsg');
+            if (input.files.length) {
+                const f = input.files[0];
+                msg.innerHTML = `<p style="color:#5f9ea0;">&#128206; ${f.name} selected (${(f.size/1024).toFixed(0)} KB)</p>`;
+                btn.disabled = false;
+            } else {
+                btn.disabled = true;
+                msg.innerHTML = '';
+            }
+        }
+
+        async function extractQuestions() {
+            const fileInput = document.getElementById('paperFile');
+            const msg = document.getElementById('uploadMsg');
+            if (!fileInput.files.length) return;
+
+            const btn = document.getElementById('btnExtract');
+            btn.disabled = true;
+            btn.innerHTML = '<i class=\'bx bx-loader-alt bx-spin\'></i> Extracting with AI…';
+            msg.innerHTML = '<p style="color:#888;">Sending to Gemini AI — this may take a few seconds…</p>';
+
+            const formData = new FormData();
+            formData.append('paper', fileInput.files[0]);
+
+            try {
+                const res  = await fetch('/api/teacher/upload-paper', { method: 'POST', body: formData });
+                const data = await res.json();
+
+                if (data.error) {
+                    msg.innerHTML = `<p style="color:#e74c3c;">&#10006; ${data.error}</p>`;
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class=\'bx bx-magic-wand\'></i> Extract Questions with AI';
+                    return;
+                }
+
+                _extractedQuestions = data.questions;
+                renderExtractedQuestions();
+                msg.innerHTML = `<p style="color:#27ae60;">&#10003; ${data.questions.length} questions extracted successfully!</p>`;
+            } catch(e) {
+                msg.innerHTML = `<p style="color:#e74c3c;">Network error. Please try again.</p>`;
+            }
+
+            btn.disabled = false;
+            btn.innerHTML = '<i class=\'bx bx-magic-wand\'></i> Re-Extract Questions';
+        }
+
+        function renderExtractedQuestions() {
+            const container = document.getElementById('extractedQuestions');
+            document.getElementById('extractedContainer').style.display = '';
+            document.getElementById('extQCount').textContent = `(${_extractedQuestions.length})`;
+            container.innerHTML = '';
+            _extractedQuestions.forEach((q, i) => {
+                const div = document.createElement('div');
+                div.className = 'ext-q-block';
+                div.id = `extq${i}`;
+                div.innerHTML = `
+                    <span style="font-weight:700;color:#5f9ea0;min-width:24px;">${i+1}.</span>
+                    <span class="q-txt">${q.title}</span>
+                    <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+                        <label style="font-size:11px;color:#aaa;">Marks</label>
+                        <input type="number" class="ext-q-marks" value="${q.marks}" min="1" max="100"
+                               onchange="_extractedQuestions[${i}].marks=parseInt(this.value)||5">
+                    </div>
+                    <button class="ext-q-del" onclick="removeExtracted(${i})" title="Remove">&times;</button>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function removeExtracted(i) {
+            _extractedQuestions.splice(i, 1);
+            renderExtractedQuestions();
+        }
+
+        // ── question builder ──
+        let qIdx = 0;
+        function addQuestion() {
+            qIdx++;
+            const n = qIdx;
+            const container = document.getElementById('questionsContainer');
+            const labels = ['A', 'B', 'C', 'D'];
+            const optInputs = labels.map((l, i) => `
+                <div class="option-row">
+                    <span class="option-label">${l}</span>
+                    <input type="text" id="q${n}opt${i}" placeholder="Option ${l}" required>
+                    <input type="radio" name="correct_${n}" value="${i}" title="Mark as correct">
+                </div>`).join('');
+
+            const block = document.createElement('div');
+            block.className = 'q-block';
+            block.id = `qblock${n}`;
+            block.innerHTML = `
+                <div class="q-num">Question ${container.querySelectorAll('.q-block').length + 1}</div>
+                <button type="button" class="remove-q" onclick="removeQuestion(${n})">&times;</button>
+                <div class="form-row">
+                    <input type="text" id="q${n}text" placeholder="Enter question text…" required>
+                </div>
+                <div class="options-grid">${optInputs}</div>
+            `;
+            container.appendChild(block);
+            updateQCount();
+        }
+
+        function removeQuestion(n) {
+            const el = document.getElementById(`qblock${n}`);
+            if (el) el.remove();
+            updateQCount();
+            // re-number
+            document.querySelectorAll('#questionsContainer .q-num').forEach((el, i) => {
+                el.textContent = `Question ${i + 1}`;
+            });
+        }
+
+        function updateQCount() {
+            const c = document.querySelectorAll('#questionsContainer .q-block').length;
+            document.getElementById('qCount').textContent = `(${c})`;
+        }
+
+        // ── save exam ──
+        async function saveExam() {
+            const msg = document.getElementById('createMsg');
+            msg.innerHTML = '';
+            const title    = document.getElementById('eTitle').value.trim();
+            const course   = document.getElementById('eCourse').value.trim();
+            const duration = parseInt(document.getElementById('eDuration').value) || 60;
+            if (!title) { msg.innerHTML = '<p style="color:#e74c3c">Please enter an exam title.</p>'; return; }
+
+            let questions = [];
+
+            if (_currentTab === 'mcq') {
+                const blocks = document.querySelectorAll('#questionsContainer .q-block');
+                if (blocks.length === 0) { msg.innerHTML = '<p style="color:#e74c3c">Add at least one question.</p>'; return; }
+                let valid = true;
+                blocks.forEach(block => {
+                    const n = block.id.replace('qblock', '');
+                    const text = document.getElementById(`q${n}text`).value.trim();
+                    const choices = ['A','B','C','D'].map((_, i) => document.getElementById(`q${n}opt${i}`).value.trim());
+                    const correctRadio = block.querySelector(`input[name="correct_${n}"]:checked`);
+                    if (!text || choices.some(c => !c) || !correctRadio) { valid = false; return; }
+                    const correctIdx = parseInt(correctRadio.value);
+                    questions.push({ title: text, type: 'mcq', choices, answer: choices[correctIdx], marks: 1 });
+                });
+                if (!valid) { msg.innerHTML = '<p style="color:#e74c3c">Fill in all question fields and mark correct answers.</p>'; return; }
+
+            } else if (_currentTab === 'subjective') {
+                if (_extractedQuestions.length === 0) {
+                    msg.innerHTML = '<p style="color:#e74c3c">Please upload and extract questions first.</p>';
+                    return;
+                }
+                questions = _extractedQuestions.map(q => ({ ...q, type: 'subjective' }));
+
+            } else {
+                // mixed: MCQ questions first, then subjective
+                const blocks = document.querySelectorAll('#questionsContainerMixed .q-block');
+                if (blocks.length === 0 && _extractedQuestionsMixed.length === 0) {
+                    msg.innerHTML = '<p style="color:#e74c3c">Add MCQ questions or upload a subjective paper (or both).</p>'; return;
+                }
+                let valid = true;
+                blocks.forEach(block => {
+                    const n = block.id.replace('qblockM', '');
+                    const text = document.getElementById(`qM${n}text`).value.trim();
+                    const choices = ['A','B','C','D'].map((_, i) => document.getElementById(`qM${n}opt${i}`).value.trim());
+                    const correctRadio = block.querySelector(`input[name="correctM_${n}"]:checked`);
+                    if (!text || choices.some(c => !c) || !correctRadio) { valid = false; return; }
+                    const correctIdx = parseInt(correctRadio.value);
+                    questions.push({ title: text, type: 'mcq', choices, answer: choices[correctIdx], marks: 1 });
+                });
+                if (!valid) { msg.innerHTML = '<p style="color:#e74c3c">Fill in all MCQ fields and mark correct answers.</p>'; return; }
+                _extractedQuestionsMixed.forEach(q => questions.push({ ...q, type: 'subjective' }));
+            }
+
+            const res = await fetch('/api/teacher/exams', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ title, course_code: course, duration, questions })
+            });
+            const data = await res.json();
+            if (data.error) {
+                msg.innerHTML = `<p style="color:#e74c3c">${data.error}</p>`;
+            } else {
+                const typeLabel = _currentTab === 'subjective' ? 'Subjective exam' : _currentTab === 'mixed' ? 'Mixed exam (MCQ + Subjective)' : 'Exam';
+                msg.innerHTML = `<p style="color:#27ae60">${typeLabel} created! Code: <strong>${data.exam_code}</strong></p>`;
+                setTimeout(() => window.location.reload(), 1400);
+            }
+        }
+
+        // ── submissions ──
+        async function loadSubmissions(examId, title) {
+            document.getElementById('subModalTitle').textContent = `Submissions — ${title}`;
+            document.getElementById('subContent').innerHTML = '<p style="text-align:center;color:#aaa;">Loading…</p>';
+            document.getElementById('subModal').classList.add('open');
+
+            const res = await fetch(`/api/teacher/exam/${examId}/submissions`);
+            const rows = await res.json();
+            if (!rows.length) {
+                document.getElementById('subContent').innerHTML = '<p style="text-align:center;color:#aaa;padding:30px;">No submissions yet.</p>';
+                return;
+            }
+            const trs = rows.map(r => {
+                const trustClass  = r.trust_score >= 70 ? 'pass' : r.trust_score >= 40 ? '' : 'fail';
+                const trustLabel  = r.trust_score >= 70 ? 'High' : r.trust_score >= 40 ? 'Medium' : 'Low';
+                const violBtn = r.result_json_id
+                    ? `<button class="btn-sm btn-view" style="font-size:11px;padding:3px 9px;background:#e67e22;"
+                            onclick="showViolations(${r.result_json_id}, '${r.student_name.replace(/'/g,"\\'")}')">
+                            Violations
+                       </button>`
+                    : '<span style="color:#ccc;font-size:11px;">—</span>';
+                const reportBtn = r.is_subjective
+                    ? `<a class="btn-sm btn-view" href="/exam/report/${r.submission_id}" target="_blank"
+                            style="font-size:11px;padding:3px 9px;background:#27ae60;text-decoration:none;">
+                            &#128196; Analysis
+                       </a>`
+                    : '';
+                const scoreDisplay = r.is_subjective
+                    ? `<span style="color:#888;font-size:12px;">Graded by AI</span>`
+                    : `<strong>${r.score}/${r.total}</strong> (${r.percentage}%)`;
+                return `<tr>
+                    <td>${r.student_name}</td>
+                    <td style="color:#777;font-size:12px;">${r.email}</td>
+                    <td>${scoreDisplay}</td>
+                    <td class="${trustClass}">${trustLabel} (${r.trust_score}%)</td>
+                    <td style="font-size:12px;">${r.submitted_at.slice(0,16)}</td>
+                    <td style="display:flex;gap:5px;flex-wrap:wrap;">${violBtn}${reportBtn}</td>
+                </tr>`;
+            }).join('');
+            document.getElementById('subContent').innerHTML = `
+                <table class="sub-table">
+                    <thead><tr>
+                        <th>Student</th><th>Email</th><th>Score</th>
+                        <th>Trust</th><th>Date</th><th>Reports</th>
+                    </tr></thead>
+                    <tbody>${trs}</tbody>
+                </table>`;
+        }
+
+        // ── violations ──
+        async function showViolations(rid, studentName) {
+            document.getElementById('violModalTitle').innerHTML =
+                `<i class='bx bx-shield-x' style="vertical-align:middle;margin-right:6px;color:#e74c3c;"></i>AI Violations — ${studentName}`;
+            document.getElementById('violContent').innerHTML = '<p style="text-align:center;color:#aaa;">Loading…</p>';
+            document.getElementById('violModal').classList.add('open');
+
+            const res = await fetch(`/api/violations/${rid}`);
+            const viols = await res.json();
+            if (!Array.isArray(viols) || !viols.length) {
+                document.getElementById('violContent').innerHTML =
+                    '<p class="no-viols">&#10003; No AI violations recorded for this session.</p>';
+                return;
+            }
+            const trs = viols.map(v => {
+                const mark = parseInt(v.Mark) || 0;
+                const badge = mark >= 20
+                    ? `<span class="viol-badge high">High Risk</span>`
+                    : `<span class="viol-badge med">Warning</span>`;
+                return `<tr>
+                    <td>${v.Name || '—'}</td>
+                    <td>${v.Time || '—'}</td>
+                    <td>${v.Duration || '—'}</td>
+                    <td>${badge}</td>
+                </tr>`;
+            }).join('');
+            document.getElementById('violContent').innerHTML = `
+                <p style="font-size:13px;color:#777;margin-bottom:12px;">
+                    Total AI-detected violations: <strong style="color:#e74c3c;">${viols.length}</strong>
+                </p>
+                <table class="viol-table">
+                    <thead><tr><th>Violation</th><th>Time</th><th>Duration</th><th>Risk</th></tr></thead>
+                    <tbody>${trs}</tbody>
+                </table>`;
+        }
+
+        // ── delete exam ──
+        async function deleteExam(id, btn) {
+            if (!confirm('Delete this exam and all its submissions?')) return;
+            const res = await fetch(`/api/teacher/exam/${id}/delete`, {method:'POST'});
+            const data = await res.json();
+            if (data.success) btn.closest('tr').remove();
+        }
+    </script>
+</body>
+</html>

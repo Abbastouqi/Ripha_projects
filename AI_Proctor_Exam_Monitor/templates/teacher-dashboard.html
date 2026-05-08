@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teacher Dashboard — ProctorAI</title>
+    <link href="https://unpkg.com/boxicons@2.0.9/css/boxicons.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{url_for('static', filename='css/TrStudent.css')}}">
+    <style>
+        .box-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 20px;
+            margin: 24px 0;
+        }
+        .box-info li {
+            padding: 22px 20px; background: #fff; border-radius: 16px;
+            display: flex; align-items: center; gap: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,.07); list-style: none;
+        }
+        .box-info li .bx { font-size: 36px; color: #5f9ea0; }
+        .box-info li .info p { font-size: 22px; font-weight: 700; color: #342E37; }
+        .box-info li .info span { font-size: 13px; color: #aaa; }
+
+        .quick-actions {
+            display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 28px;
+        }
+        .btn-action {
+            padding: 11px 24px; border-radius: 30px; border: none;
+            font-size: 14px; font-weight: 600; cursor: pointer;
+            text-decoration: none; display: inline-flex; align-items: center; gap: 7px;
+            transition: opacity .2s;
+        }
+        .btn-action:hover { opacity: .85; }
+        .btn-primary { background: #5f9ea0; color: #fff; }
+        .btn-outline { background: #fff; color: #5f9ea0; border: 2px solid #5f9ea0; }
+
+        /* Recent table override */
+        .status-pass { background: #27ae60; }
+        .status-fail { background: #e74c3c; }
+        .status-cheat { background: #e67e22; }
+        .pct-bar-wrap { width: 80px; height: 8px; background: #eee; border-radius: 4px; display: inline-block; vertical-align: middle; margin-left: 6px; }
+        .pct-bar { height: 100%; border-radius: 4px; background: #5f9ea0; }
+    </style>
+</head>
+<body>
+    <!-- SIDEBAR -->
+    <section id="sidebar">
+        <a href="#" class="brand">
+            <i class='bx bxs-shield-alt-2'></i>
+            <span class="text">ProctorAI</span>
+        </a>
+        <ul class="side-menu top">
+            <li class="active">
+                <a href="/teacher/dashboard">
+                    <i class='bx bxs-dashboard'></i>
+                    <span class="text">Dashboard</span>
+                </a>
+            </li>
+            <li>
+                <a href="/teacher/exams">
+                    <i class='bx bxs-book-alt'></i>
+                    <span class="text">My Exams</span>
+                </a>
+            </li>
+            <li>
+                <a href="/logout">
+                    <i class='bx bxs-log-out-circle'></i>
+                    <span class="text">Logout</span>
+                </a>
+            </li>
+        </ul>
+    </section>
+
+    <!-- CONTENT -->
+    <section id="content">
+        <nav>
+            <i class='bx bx-menu'></i>
+            <span class="text">ProctorAI — Teacher Portal</span>
+        </nav>
+
+        <main>
+            <div class="head-title">
+                <div class="left">
+                    <h1>Welcome, {{ teacher_name }}!</h1>
+                    <ul class="breadcrumb">
+                        <li><a href="#">Dashboard</a></li>
+                        <li><i class='bx bx-chevron-right'></i></li>
+                        <li><a class="active" href="#">Overview</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Stats -->
+            <ul class="box-info">
+                <li>
+                    <i class='bx bxs-book-alt'></i>
+                    <div class="info">
+                        <p>{{ exam_count }}</p>
+                        <span>Total Exams</span>
+                    </div>
+                </li>
+                <li>
+                    <i class='bx bxs-group'></i>
+                    <div class="info">
+                        <p>{{ student_count }}</p>
+                        <span>Students</span>
+                    </div>
+                </li>
+                <li>
+                    <i class='bx bxs-graduation'></i>
+                    <div class="info">
+                        <p>{{ submission_count }}</p>
+                        <span>Submissions</span>
+                    </div>
+                </li>
+            </ul>
+
+            <!-- Quick actions -->
+            <div class="quick-actions">
+                <a href="/teacher/exams" class="btn-action btn-primary">
+                    <i class='bx bx-plus'></i> New Exam
+                </a>
+                <a href="/teacher/exams" class="btn-action btn-outline">
+                    <i class='bx bxs-book-alt'></i> Manage Exams
+                </a>
+            </div>
+
+            <!-- Recent submissions table -->
+            <div class="table-data">
+                <div class="record" style="flex-basis:100%;">
+                    <div class="head">
+                        <h3>Recent Submissions</h3>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Student</th>
+                                <th>Exam</th>
+                                <th>Score</th>
+                                <th>Result</th>
+                                <th>AI Trust</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if recent %}
+                                {% for row in recent %}
+                                <tr>
+                                    <td><strong>{{ row[0] }}</strong></td>
+                                    <td style="color:#777;font-size:13px;">{{ row[1] }}</td>
+                                    <td>
+                                        {{ row[2] }}/{{ row[3] }}
+                                        {% if row[3] %}
+                                            {% set pct = (row[2] / row[3] * 100)|int %}
+                                            <span class="pct-bar-wrap"><span class="pct-bar" style="width:{{ pct }}%"></span></span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if row[3] %}
+                                            {% set pct = (row[2] / row[3] * 100)|int %}
+                                            {% if pct >= 50 %}
+                                                <span class="status status-pass">Pass</span>
+                                            {% else %}
+                                                <span class="status status-fail">Fail</span>
+                                            {% endif %}
+                                        {% else %}—{% endif %}
+                                    </td>
+                                    <td>
+                                        {% set t = row[4] %}
+                                        {% if t >= 70 %}
+                                            <span class="status status-pass">High</span>
+                                        {% elif t >= 40 %}
+                                            <span class="status status-cheat">Medium</span>
+                                        {% else %}
+                                            <span class="status status-fail">Low</span>
+                                        {% endif %}
+                                    </td>
+                                    <td style="font-size:12px;">{{ row[5].strftime('%Y-%m-%d %H:%M') if row[5] else '—' }}</td>
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr><td colspan="6" style="text-align:center;color:#aaa;padding:30px;">No submissions yet.</td></tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </section>
+
+    <script>
+        const toggle = document.querySelector('#content nav .bx-menu');
+        const sidebar = document.getElementById('sidebar');
+        if (toggle) toggle.addEventListener('click', () => sidebar.classList.toggle('hide'));
+    </script>
+</body>
+</html>

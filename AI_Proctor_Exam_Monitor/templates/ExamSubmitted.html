@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exam Submitted — ProctorAI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Poppins', sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #f0fafa 0%, #e8f4f5 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .card {
+            background: #fff;
+            border-radius: 24px;
+            padding: 52px 48px;
+            text-align: center;
+            max-width: 520px;
+            width: 90%;
+            box-shadow: 0 8px 40px rgba(95,158,160,.15);
+        }
+        .icon-wrap {
+            width: 90px; height: 90px;
+            background: linear-gradient(135deg, #5f9ea0, #3a7c7e);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 28px;
+            font-size: 42px;
+        }
+        h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: #5f9ea0;
+            margin-bottom: 12px;
+        }
+        .student-name {
+            font-size: 16px;
+            color: #555;
+            margin-bottom: 28px;
+        }
+        .info-box {
+            background: #f0fafa;
+            border-left: 4px solid #5f9ea0;
+            border-radius: 0 12px 12px 0;
+            padding: 18px 20px;
+            text-align: left;
+            margin-bottom: 32px;
+        }
+        .info-box p {
+            font-size: 14px;
+            color: #555;
+            line-height: 1.7;
+        }
+        .info-box strong { color: #342E37; }
+        .points {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 32px;
+        }
+        .point {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 13px;
+            color: #666;
+        }
+        .dot {
+            width: 8px; height: 8px;
+            background: #5f9ea0;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .btn-home {
+            display: inline-block;
+            padding: 13px 36px;
+            background: #5f9ea0;
+            color: #fff;
+            border-radius: 50px;
+            font-size: 15px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: background .2s, transform .15s;
+        }
+        .btn-home:hover { background: #4a8082; transform: translateY(-1px); }
+        .footer-note {
+            margin-top: 24px;
+            font-size: 12px;
+            color: #bbb;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="icon-wrap">&#10003;</div>
+
+        <h1>Exam Submitted!</h1>
+        <p class="student-name">Well done, <strong>{{ student_name }}</strong>.</p>
+
+        <div class="info-box">
+            <p>
+                Your exam has been <strong>successfully submitted</strong> and is now under review.<br><br>
+                Your result and AI-proctoring report will be shared by your <strong>teacher</strong>.
+                Please do not close this page or refresh until you see this screen.
+            </p>
+        </div>
+
+        <div class="points">
+            <div class="point">
+                <span class="dot"></span>
+                Your answers have been recorded.
+            </div>
+            <div class="point">
+                <span class="dot"></span>
+                AI monitoring data has been sent to your teacher.
+            </div>
+            <div class="point">
+                <span class="dot"></span>
+                Results will be announced by your institution.
+            </div>
+        </div>
+
+        <a href="/student/dashboard" class="btn-home">Back to Dashboard</a>
+        <p class="footer-note">&copy; ProctorAI Exam Monitoring System</p>
+    </div>
+</body>
+</html>

@@ -1,0 +1,203 @@
+/* ═══════════════════════════════════════
+   AI Proctor — Camera Monitoring Panel
+   ═══════════════════════════════════════ */
+
+/* Floating panel — bottom-right corner */
+.proctor-panel {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    width: 240px;
+    background: #1a1a2e;
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0,0,0,.45);
+    z-index: 9999;
+    overflow: hidden;
+    transition: all .3s ease;
+    border: 1px solid rgba(95,158,160,.3);
+}
+
+.proctor-panel.hidden {
+    display: none;
+}
+
+/* Pulsing border when monitoring is active */
+.proctor-panel.monitoring-active {
+    border-color: #5f9ea0;
+    box-shadow: 0 8px 32px rgba(95,158,160,.35), 0 0 0 2px rgba(95,158,160,.2);
+}
+
+/* Header bar */
+.proctor-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px 8px;
+    background: rgba(95,158,160,.15);
+    border-bottom: 1px solid rgba(95,158,160,.2);
+}
+
+.ph-title {
+    color: #5f9ea0;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: .4px;
+}
+
+.ph-min {
+    background: none;
+    border: none;
+    color: #aaa;
+    font-size: 20px;
+    cursor: pointer;
+    line-height: 1;
+    padding: 0 2px;
+    transition: color .2s;
+}
+.ph-min:hover { color: #fff; }
+
+/* Live camera feed */
+.proctor-feed {
+    width: 100%;
+    height: 160px;
+    object-fit: cover;
+    display: block;
+    background: #000;
+}
+
+/* Status body */
+.proctor-body {
+    padding: 10px 14px 12px;
+}
+
+.status-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 7px;
+}
+
+.status-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: #5f9ea0;
+    flex-shrink: 0;
+    transition: background .3s;
+}
+.status-dot.warn   { background: #f39c12; }
+.status-dot.danger { background: #e74c3c; animation: blink .8s infinite; }
+
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: .3; }
+}
+
+.status-label {
+    color: #aaa;
+    font-size: 11px;
+    width: 52px;
+    flex-shrink: 0;
+}
+
+.status-val {
+    color: #eee;
+    font-size: 11px;
+    font-weight: 600;
+    flex: 1;
+    text-align: right;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.proctor-divider {
+    border: none;
+    border-top: 1px solid rgba(255,255,255,.08);
+    margin: 8px 0;
+}
+
+.violation-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.v-label {
+    color: #aaa;
+    font-size: 11px;
+}
+
+.v-num {
+    color: #e74c3c;
+    font-size: 16px;
+    font-weight: 800;
+}
+
+.proctor-alert {
+    display: none;
+    margin-top: 8px;
+    background: rgba(231,76,60,.15);
+    border: 1px solid rgba(231,76,60,.3);
+    border-radius: 8px;
+    padding: 6px 10px;
+    color: #e74c3c;
+    font-size: 11px;
+    font-weight: 600;
+    word-break: break-word;
+}
+
+/* Violation log list */
+.violation-log {
+    margin-top: 8px;
+    max-height: 110px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,255,255,.15) transparent;
+}
+.violation-log::-webkit-scrollbar { width: 4px; }
+.violation-log::-webkit-scrollbar-thumb { background: rgba(255,255,255,.15); border-radius: 2px; }
+.vlog-entry {
+    display: flex;
+    gap: 6px;
+    align-items: flex-start;
+    padding: 4px 0;
+    border-bottom: 1px solid rgba(255,255,255,.05);
+    animation: fadeIn .3s ease;
+}
+.vlog-entry:last-child { border-bottom: none; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+.vlog-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: #e74c3c; flex-shrink: 0; margin-top: 4px;
+}
+.vlog-name { color: #ff8a80; font-size: 10.5px; font-weight: 700; line-height: 1.4; }
+.vlog-time { color: #666; font-size: 9.5px; flex-shrink: 0; margin-left: auto; padding-left: 4px; }
+
+/* Restore button (shown when panel is minimized) */
+.proctor-toggle-btn {
+    display: none;
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: #1a1a2e;
+    border: 2px solid #5f9ea0;
+    color: #5f9ea0;
+    font-size: 22px;
+    cursor: pointer;
+    z-index: 9999;
+    box-shadow: 0 4px 16px rgba(0,0,0,.4);
+    transition: all .2s;
+    align-items: center;
+    justify-content: center;
+}
+.proctor-toggle-btn.show {
+    display: flex;
+}
+.proctor-toggle-btn:hover {
+    background: #5f9ea0;
+    color: #fff;
+}

@@ -1,0 +1,14 @@
+*.mp4
+*.avi
+venv/
+venv
+.venv/
+.env
+__pycache__/
+*.pyc
+static/Profiles/*
+static/OutputAudios/*
+static/OutputVideos/*
+!static/Profiles/.gitkeep
+!static/OutputAudios/.gitkeep
+!static/OutputVideos/.gitkeep

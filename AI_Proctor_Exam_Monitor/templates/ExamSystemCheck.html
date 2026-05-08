@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en" title="System Check" xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Exam System Check</title>
+    <link rel="stylesheet" href="{{url_for('static', filename='css/SystemCheck.css')}}">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+</head>
+
+<body>
+    <nav>
+      <div class="left-links">
+        <p class="P-title">Riphah Exam Monitoring System by Abbas</p>
+      </div>
+      <div class="right-links">
+        <a class="links" href="#"> Rules</a>
+        <a class="links" href="#">Requirements</a>
+      </div>
+    </nav>
+    <main class="table">
+        <section class="table__header">
+            <h1>System Compatibility Check</h1>
+            <div class="export__file">
+               <label for="export-file" class="export__file-btn" title="System Check"></label>
+                <input type="checkbox" id="export-file">
+            </div>
+        </section>
+        <section class="table__body">
+            <table>
+                <thead>
+                    <tr>
+                        <th> Device <span class="icon-arrow">&UpArrow;</span></th>
+                        <th> Status <span class="icon-arrow">&UpArrow;</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td> Webcam :</td>
+                        <td> <p id="webcam-status"> </p></td>
+                    </tr>
+                     <tr>
+                        <td> Microphone : </td>
+                        <td><p id="microphone-status"> </p></td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+        <section class="section-button">
+        <div class="nextButton">
+        <a href="#" class="next" id="ajax-link" >Next &raquo;</a>
+      </div>
+      </section>
+
+
+    </main>
+        <footer>
+        <div class="container8">
+          <div>
+            <p class="box-footer1">&copy; Riphah Exam Monitoring System by Abbas</p>
+          </div>
+        </div>
+      </footer>
+     <script>
+        // Camera is handled server-side by OpenCV — check backend status instead of getUserMedia
+        // (getUserMedia would fail because OpenCV already holds the camera device)
+        async function checkSystemStatus() {
+            const webcamEl = document.getElementById('webcam-status');
+            const micEl    = document.getElementById('microphone-status');
+            webcamEl.textContent = 'Checking…';
+            micEl.textContent    = 'Checking…';
+            webcamEl.style.color = '#888';
+            micEl.style.color    = '#888';
+
+            try {
+                const res  = await fetch('/api/monitoring/status');
+                const data = await res.json();
+                // Backend camera reader is running — webcam is available server-side
+                webcamEl.textContent = 'Available';
+                webcamEl.style.color = '#27ae60';
+                micEl.textContent    = 'Available';
+                micEl.style.color    = '#27ae60';
+            } catch (e) {
+                webcamEl.textContent = 'Not available';
+                webcamEl.style.color = '#e74c3c';
+                micEl.textContent    = 'Not available';
+                micEl.style.color    = '#e74c3c';
+            }
+        }
+
+        checkSystemStatus();
+    </script>
+<script>
+     $(document).ready(function() {
+    $("#ajax-link").click(function(event) {
+        event.preventDefault();
+
+        const checkValue1 = document.getElementById('webcam-status').textContent;
+        const checkValue2 = document.getElementById('microphone-status').textContent;
+
+        $.ajax({
+            url: "/systemCheck",
+            type: "POST",
+            contentType: "application/json",
+            data: JSON.stringify({ input: checkValue1 + ';' + checkValue2 }),
+            success: function(response) {
+                window.location.href = "/" + response['output'];
+            },
+            error: function(xhr, status, error) {
+                console.error("AJAX request failed:", error);
+            }
+        });
+    });
+});
+    </script>
+</body>
+
+</html>

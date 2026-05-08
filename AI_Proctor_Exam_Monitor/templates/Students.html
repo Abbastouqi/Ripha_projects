@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href='https://unpkg.com/boxicons@2.0.9/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="{{url_for('static', filename='css/TrStudent.css')}}">
+    <title>User Management — ProctorAI Admin</title>
+    <style>
+        /* ── tab bar ── */
+        .tab-bar {
+            display: flex; gap: 0; margin-bottom: 22px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        .tab-btn {
+            padding: 10px 28px; border: none; background: transparent;
+            font-size: 14px; font-weight: 600; color: #aaa; cursor: pointer;
+            border-bottom: 3px solid transparent; margin-bottom: -2px;
+            transition: .2s; display: flex; align-items: center; gap: 7px;
+        }
+        .tab-btn.active { color: #5f9ea0; border-bottom-color: #5f9ea0; }
+        .tab-btn:hover:not(.active) { color: #777; }
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; }
+
+        /* ── role badge ── */
+        .role-badge {
+            display: inline-block; padding: 2px 12px; border-radius: 20px;
+            font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px;
+        }
+        .role-student  { background: #e8f7f7; color: #5f9ea0; }
+        .role-teacher  { background: #fef0e6; color: #d35400; }
+        .role-admin    { background: #f0f0ff; color: #6c5ce7; }
+
+        /* ── action icon buttons ── */
+        .action-icon { background: none; border: none; cursor: pointer; font-size: 18px; padding: 2px 5px; }
+        .action-icon.edit  { color: #5f9ea0; }
+        .action-icon.del   { color: #e74c3c; }
+
+        /* ── add button ── */
+        .btn-add-user {
+            padding: 9px 20px; background: #5f9ea0; color: #fff;
+            border: none; border-radius: 30px; font-size: 13px; font-weight: 600;
+            cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
+        }
+
+        /* ── modal ── */
+        .modal-overlay {
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,.5); z-index: 5000;
+            justify-content: center; align-items: center;
+        }
+        .modal-overlay.open { display: flex; }
+        .modal-box {
+            background: #fff; border-radius: 16px; padding: 28px;
+            width: 100%; max-width: 420px; position: relative;
+        }
+        .modal-box h3 { font-size: 18px; margin-bottom: 18px; color: #342E37; }
+        .modal-close {
+            position: absolute; top: 14px; right: 18px; font-size: 24px;
+            color: #aaa; cursor: pointer; background: none; border: none;
+        }
+        .form-group { margin-bottom: 14px; }
+        .form-group label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 5px; color: #555; }
+        .form-group input, .form-group select {
+            width: 100%; padding: 9px 12px; border: 2px solid #e0e0e0;
+            border-radius: 10px; font-size: 14px; outline: none;
+        }
+        .form-group input:focus, .form-group select:focus { border-color: #5f9ea0; }
+        .btn-submit {
+            width: 100%; padding: 11px; background: #5f9ea0; color: #fff;
+            border: none; border-radius: 30px; font-size: 14px; font-weight: 700;
+            cursor: pointer; margin-top: 6px;
+        }
+    </style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<section id="sidebar">
+    <a href="#" class="brand">
+        <i class='bx bxs-shield-alt-2'></i>
+        <span class="text">ProctorAI</span>
+    </a>
+    <ul class="side-menu top">
+        <li>
+            <a href="/admin/dashboard">
+                <i class='bx bxs-dashboard'></i>
+                <span class="text">Dashboard</span>
+            </a>
+        </li>
+        <li class="active">
+            <a href="{{url_for('adminStudents')}}">
+                <i class='bx bxs-group'></i>
+                <span class="text">User Management</span>
+            </a>
+        </li>
+        <li>
+            <a href="{{url_for('adminResults')}}">
+                <i class='bx bxs-bar-chart-alt-2'></i>
+                <span class="text">All Results</span>
+            </a>
+        </li>
+        <li>
+            <a href="{{url_for('logout')}}">
+                <i class='bx bxs-log-out-circle'></i>
+                <span class="text">Logout</span>
+            </a>
+        </li>
+    </ul>
+</section>
+
+<!-- CONTENT -->
+<section id="content">
+    <nav>
+        <i class='bx bx-menu'></i>
+        <span class="text">ProctorAI — Admin Panel</span>
+    </nav>
+
+    <main>
+        <div class="head-title">
+            <div class="left">
+                <h1>User Management</h1>
+                <ul class="breadcrumb">
+                    <li><a href="#">Dashboard</a></li>
+                    <li><i class='bx bx-chevron-right'></i></li>
+                    <li><a class="active" href="#">Users</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="table-data">
+            <div class="record" style="flex-basis:100%;">
+                <div class="head">
+                    <h3>Registered Users</h3>
+                    <button class="btn-add-user" onclick="openAddModal()">
+                        <i class='bx bx-plus'></i> Add User
+                    </button>
+                </div>
+
+                <!-- Tab bar -->
+                <div class="tab-bar">
+                    <button class="tab-btn active" id="tab-students-btn" onclick="switchTab('students')">
+                        <i class='bx bxs-user-detail'></i> Students
+                        <span style="background:#e8f7f7;color:#5f9ea0;border-radius:20px;padding:1px 8px;font-size:11px;">
+                            {{ students|length }}
+                        </span>
+                    </button>
+                    <button class="tab-btn" id="tab-teachers-btn" onclick="switchTab('teachers')">
+                        <i class='bx bxs-chalkboard'></i> Teachers
+                        <span style="background:#fef0e6;color:#d35400;border-radius:20px;padding:1px 8px;font-size:11px;">
+                            {{ teachers|length }}
+                        </span>
+                    </button>
+                </div>
+
+                <!-- Students tab -->
+                <div class="tab-panel active" id="panel-students">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Role</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in students %}
+                            <tr id="srow-{{ row[0] }}">
+                                <td style="color:#aaa;">{{ row[0] }}</td>
+                                <td><strong>{{ row[1] }}</strong></td>
+                                <td style="color:#777;">{{ row[2] }}</td>
+                                <td><span class="role-badge role-student">Student</span></td>
+                                <td>
+                                    <div style="display:flex;gap:4px;align-items:center;">
+                                        <button class="action-icon edit"
+                                            onclick="openEditModal({{ row[0] }}, '{{ row[1] }}', '{{ row[2] }}')"
+                                            title="Edit">
+                                            <i class='bx bxs-edit'></i>
+                                        </button>
+                                        <a href="/deleteStudent/{{ row[0] }}"
+                                            onclick="return confirm('Delete this student?')"
+                                            class="action-icon del" title="Delete">
+                                            <i class='bx bxs-message-square-x'></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr><td colspan="5" style="text-align:center;color:#aaa;padding:30px;">No students registered yet.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Teachers tab -->
+                <div class="tab-panel" id="panel-teachers">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Role</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in teachers %}
+                            <tr id="trow-{{ row[0] }}">
+                                <td style="color:#aaa;">{{ row[0] }}</td>
+                                <td><strong>{{ row[1] }}</strong></td>
+                                <td style="color:#777;">{{ row[2] }}</td>
+                                <td><span class="role-badge role-teacher">Teacher</span></td>
+                                <td>
+                                    <div style="display:flex;gap:4px;align-items:center;">
+                                        <button class="action-icon edit"
+                                            onclick="openEditModal({{ row[0] }}, '{{ row[1] }}', '{{ row[2] }}')"
+                                            title="Edit">
+                                            <i class='bx bxs-edit'></i>
+                                        </button>
+                                        <a href="/deleteStudent/{{ row[0] }}"
+                                            onclick="return confirm('Delete this teacher?')"
+                                            class="action-icon del" title="Delete">
+                                            <i class='bx bxs-message-square-x'></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr><td colspan="5" style="text-align:center;color:#aaa;padding:30px;">No teachers registered yet.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+        </div>
+    </main>
+</section>
+
+<!-- ═══ ADD USER MODAL ═══ -->
+<div class="modal-overlay" id="addModal">
+    <div class="modal-box">
+        <button class="modal-close" onclick="closeModal('addModal')">&times;</button>
+        <h3><i class='bx bx-user-plus' style="color:#5f9ea0;vertical-align:middle;margin-right:6px;"></i>Add New User</h3>
+        <form action="{{ url_for('insertStudent') }}" method="POST">
+            <div class="form-group">
+                <label>Full Name</label>
+                <input type="text" name="username" placeholder="Enter full name" required>
+            </div>
+            <div class="form-group">
+                <label>Email Address</label>
+                <input type="email" name="email" placeholder="Enter email" required>
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" name="password" placeholder="Set password" required>
+            </div>
+            <div class="form-group">
+                <label>Role</label>
+                <select name="role">
+                    <option value="STUDENT">Student</option>
+                    <option value="TEACHER">Teacher</option>
+                </select>
+            </div>
+            <button type="submit" class="btn-submit">Add User</button>
+        </form>
+    </div>
+</div>
+
+<!-- ═══ EDIT USER MODAL ═══ -->
+<div class="modal-overlay" id="editModal">
+    <div class="modal-box">
+        <button class="modal-close" onclick="closeModal('editModal')">&times;</button>
+        <h3><i class='bx bxs-edit' style="color:#5f9ea0;vertical-align:middle;margin-right:6px;"></i>Edit User</h3>
+        <form action="{{ url_for('updateStudent') }}" method="POST">
+            <input type="hidden" name="id" id="editId">
+            <div class="form-group">
+                <label>Full Name</label>
+                <input type="text" name="name" id="editName" required>
+            </div>
+            <div class="form-group">
+                <label>Email Address</label>
+                <input type="email" name="email" id="editEmail" required>
+            </div>
+            <div class="form-group">
+                <label>New Password <span style="color:#aaa;font-weight:400;">(leave blank to keep current)</span></label>
+                <input type="password" name="password" placeholder="New password">
+            </div>
+            <button type="submit" class="btn-submit">Save Changes</button>
+        </form>
+    </div>
+</div>
+
+<script src="{{url_for('static', filename='js/TrStudent.js')}}"></script>
+<script>
+    // Sidebar toggle
+    const menuBtn = document.querySelector('#content nav .bx-menu');
+    const sidebar = document.getElementById('sidebar');
+    if (menuBtn) menuBtn.addEventListener('click', () => sidebar.classList.toggle('hide'));
+
+    // Tab switching
+    function switchTab(tab) {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+        document.getElementById(`tab-${tab}-btn`).classList.add('active');
+        document.getElementById(`panel-${tab}`).classList.add('active');
+    }
+
+    // Modals
+    function openAddModal() { document.getElementById('addModal').classList.add('open'); }
+    function openEditModal(id, name, email) {
+        document.getElementById('editId').value = id;
+        document.getElementById('editName').value = name;
+        document.getElementById('editEmail').value = email;
+        document.getElementById('editModal').classList.add('open');
+    }
+    function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+    document.querySelectorAll('.modal-overlay').forEach(m => {
+        m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
+    });
+</script>
+</body>
+</html>
