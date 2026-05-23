@@ -1,0 +1,10 @@
+voice:
+  enabled: false          # set true to activate microphone input
+  language: "en-US"       # BCP-47 language code for speech recognition
+
+portal:
+  url: "https://admissions.riphah.edu.pk/riphah_demo/public/"
+  headless: true          # false to see the browser window while automating
+
+logging:
+  level: "INFO"           # DEBUG | INFO | WARNING

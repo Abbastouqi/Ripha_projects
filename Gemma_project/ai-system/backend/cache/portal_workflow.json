@@ -1,0 +1,266 @@
+{
+  "7ebdb9cde1bb5ab6": {
+    "portal_url": "https://admissions.riphah.edu.pk/",
+    "explored_at": "2026-05-21T10:25:15",
+    "scan_failed": false,
+    "login_form": {
+      "email_sel": "input[name=\"email\"]",
+      "password_sel": "input[name=\"password\"]",
+      "submit_text": "Login"
+    },
+    "registration": {
+      "url": "https://admissions.riphah.edu.pk/riphah_demo/public/account-registration",
+      "field_map": {
+        "full_name": "input[name=\"firstname\"]",
+        "phone": "input[name=\"mobile\"]",
+        "email": "input[name=\"email\"]",
+        "portal_password": "input[name=\"password\"]"
+      },
+      "submit_text": "Sign Up",
+      "unmapped_fields": [],
+      "all_buttons": "Sign Up"
+    },
+    "verification": {
+      "type": "unknown"
+    },
+    "data_fields": [
+      {
+        "key": "full_name",
+        "label": "Full Name (as on CNIC)",
+        "type": "text",
+        "required": true
+      },
+      {
+        "key": "father_name",
+        "label": "Father's Full Name",
+        "type": "text",
+        "required": true
+      },
+      {
+        "key": "cnic",
+        "label": "CNIC / B-Form Number",
+        "type": "text",
+        "required": true
+      },
+      {
+        "key": "dob",
+        "label": "Date of Birth (DD/MM/YYYY)",
+        "type": "date",
+        "required": true
+      },
+      {
+        "key": "gender",
+        "label": "Gender",
+        "type": "select",
+        "required": true,
+        "options": [
+          "Male",
+          "Female",
+          "Other"
+        ]
+      },
+      {
+        "key": "email",
+        "label": "Email Address (will be used to create your portal account)",
+        "type": "email",
+        "required": true
+      },
+      {
+        "key": "portal_password",
+        "label": "Choose a Portal Password (min 8 chars — you'll use this to log in later)",
+        "type": "password",
+        "required": true
+      },
+      {
+        "key": "phone",
+        "label": "Phone Number",
+        "type": "phone",
+        "required": true
+      },
+      {
+        "key": "program",
+        "label": "Program Applying For",
+        "type": "text",
+        "required": true
+      },
+      {
+        "key": "campus",
+        "label": "Preferred Campus",
+        "type": "text",
+        "required": true
+      },
+      {
+        "key": "matric_marks",
+        "label": "Matric / O-Level Marks or %",
+        "type": "text",
+        "required": true
+      },
+      {
+        "key": "inter_marks",
+        "label": "Intermediate / A-Level Marks or %",
+        "type": "text",
+        "required": true
+      },
+      {
+        "key": "entry_test",
+        "label": "Entry Test Score (MDCAT / ECAT / NAT)",
+        "type": "text",
+        "required": true
+      },
+      {
+        "key": "address",
+        "label": "Complete Home Address",
+        "type": "text",
+        "required": true
+      }
+    ],
+    "required_documents": [
+      "cnic",
+      "photo",
+      "matric_certificate",
+      "inter_certificate"
+    ],
+    "exploration_log": [
+      "Starting exploration: https://admissions.riphah.edu.pk/",
+      "Homepage: 'Admissions Portal | Riphah International University' \u2014 1 forms detected",
+      "Classified: login=yes, reg=no (may be separate page)",
+      "Login schema: email_sel=input[name=\"email\"], pw_sel=input[name=\"password\"], submit='Login'",
+      "Registration appears to be on a separate page \u2014 navigating...",
+      "Separate reg page: 4 mapped, 0 unmapped",
+      "Verification hint: unknown",
+      "Exploration complete \u2014 login=True, reg_fields=['full_name', 'phone', 'email', 'portal_password']"
+    ]
+  },
+  "954219d92f588903": {
+    "portal_url": "https://admissions.riphah.edu.pk/riphah_demo/public/",
+    "explored_at": "2026-05-21T11:39:00",
+    "scan_failed": false,
+    "login_form": {
+      "email_sel": "input[name=\"email\"]",
+      "password_sel": "input[name=\"password\"]",
+      "submit_text": "Login"
+    },
+    "registration": {
+      "url": "https://admissions.riphah.edu.pk/riphah_demo/public/account-registration",
+      "field_map": {
+        "full_name": "input[name=\"firstname\"]",
+        "phone": "input[name=\"mobile\"]",
+        "email": "input[name=\"email\"]",
+        "portal_password": "input[name=\"password\"]"
+      },
+      "submit_text": "Sign Up",
+      "unmapped_fields": [],
+      "all_buttons": "Sign Up"
+    },
+    "verification": {
+      "type": "unknown"
+    },
+    "data_fields": [
+      {
+        "key": "full_name",
+        "label": "Full Name (as on CNIC)",
+        "type": "text",
+        "required": true
+      },
+      {
+        "key": "father_name",
+        "label": "Father's Full Name",
+        "type": "text",
+        "required": true
+      },
+      {
+        "key": "cnic",
+        "label": "CNIC / B-Form Number",
+        "type": "text",
+        "required": true
+      },
+      {
+        "key": "dob",
+        "label": "Date of Birth (DD/MM/YYYY)",
+        "type": "date",
+        "required": true
+      },
+      {
+        "key": "gender",
+        "label": "Gender",
+        "type": "select",
+        "required": true,
+        "options": [
+          "Male",
+          "Female",
+          "Other"
+        ]
+      },
+      {
+        "key": "email",
+        "label": "Email Address (will be used to create your portal account)",
+        "type": "email",
+        "required": true
+      },
+      {
+        "key": "portal_password",
+        "label": "Choose a Portal Password (min 8 chars — you'll use this to log in later)",
+        "type": "password",
+        "required": true
+      },
+      {
+        "key": "phone",
+        "label": "Phone Number",
+        "type": "phone",
+        "required": true
+      },
+      {
+        "key": "program",
+        "label": "Program Applying For",
+        "type": "text",
+        "required": true
+      },
+      {
+        "key": "campus",
+        "label": "Preferred Campus",
+        "type": "text",
+        "required": true
+      },
+      {
+        "key": "matric_marks",
+        "label": "Matric / O-Level Marks or %",
+        "type": "text",
+        "required": true
+      },
+      {
+        "key": "inter_marks",
+        "label": "Intermediate / A-Level Marks or %",
+        "type": "text",
+        "required": true
+      },
+      {
+        "key": "entry_test",
+        "label": "Entry Test Score (MDCAT / ECAT / NAT)",
+        "type": "text",
+        "required": true
+      },
+      {
+        "key": "address",
+        "label": "Complete Home Address",
+        "type": "text",
+        "required": true
+      }
+    ],
+    "required_documents": [
+      "cnic",
+      "photo",
+      "matric_certificate",
+      "inter_certificate"
+    ],
+    "exploration_log": [
+      "Starting exploration: https://admissions.riphah.edu.pk/riphah_demo/public/",
+      "Homepage: 'Admissions Portal | Riphah International University' \u2014 1 forms detected",
+      "Classified: login=yes, reg=no (may be separate page)",
+      "Login schema: email_sel=input[name=\"email\"], pw_sel=input[name=\"password\"], submit='Login'",
+      "Registration appears to be on a separate page \u2014 navigating...",
+      "Separate reg page: 4 mapped, 0 unmapped",
+      "Verification hint: unknown",
+      "Exploration complete \u2014 login=True, reg_fields=['full_name', 'phone', 'email', 'portal_password']"
+    ]
+  }
+}

@@ -1,0 +1,107 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: medical_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: medical_ai
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin123
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/database/schema.sql:/docker-entrypoint-initdb.d/01_schema.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d medical_ai"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: medical_qdrant
+    restart: unless-stopped
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - qdrant_data:/qdrant/storage
+    environment:
+      QDRANT__SERVICE__API_KEY: medical_secret_key
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/localhost/6333' 2>/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: medical_ollama
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    # CPU-only mode - no GPU passthrough (Intel integrated GPU detected)
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:11434/api/tags || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: medical_backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      POSTGRES_HOST: postgres
+      QDRANT_HOST: qdrant
+      OLLAMA_HOST: http://ollama:11434
+    depends_on:
+      postgres:
+        condition: service_healthy
+      qdrant:
+        condition: service_healthy
+      ollama:
+        condition: service_healthy
+    volumes:
+      - ./data:/app/data
+
+  # OpenWebUI - polished ChatGPT-style UI that talks to our OpenAI-compatible
+  # /v1 endpoint on the backend. Useful as an alternative to the React frontend
+  # for power users (file uploads, multi-session, prompt library, etc.).
+  # Visit http://localhost:3001 after `docker compose up`.
+  openwebui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: medical_openwebui
+    restart: unless-stopped
+    ports:
+      - "3001:8080"
+    environment:
+      # Point OpenWebUI at our backend's OpenAI-compatible endpoint.
+      OPENAI_API_BASE_URL: http://backend:8000/v1
+      OPENAI_API_KEY: ${OPENAI_COMPAT_API_KEY:-dev-no-auth}
+      # Disable the built-in Ollama integration; backend already routes to Ollama
+      # internally and adds workflow logic on top.
+      ENABLE_OLLAMA_API: "false"
+      WEBUI_AUTH: "true"
+      WEBUI_NAME: "Local AI Platform"
+    volumes:
+      - openwebui_data:/app/backend/data
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
+  qdrant_data:
+  ollama_data:
+  openwebui_data:

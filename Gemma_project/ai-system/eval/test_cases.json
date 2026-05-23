@@ -1,0 +1,91 @@
+{
+  "description": "Eval set for the local AI platform. Each case: query + expected workflow + optional 'expect_substrings' (any one must appear in the answer, case-insensitive).",
+  "cases": [
+    {
+      "id": "general-001",
+      "query": "Hello, who are you?",
+      "expected_workflow": "general"
+    },
+    {
+      "id": "general-002",
+      "query": "What is 17 multiplied by 23?",
+      "expected_workflow": "general",
+      "expect_substrings": ["391"]
+    },
+    {
+      "id": "general-003",
+      "query": "Translate 'good morning' to French.",
+      "expected_workflow": "general",
+      "expect_substrings": ["bonjour"]
+    },
+
+    {
+      "id": "hr-001",
+      "query": "How many annual leave days do I get?",
+      "expected_workflow": "hr_tasks"
+    },
+    {
+      "id": "hr-002",
+      "query": "What is the company's sick leave policy?",
+      "expected_workflow": "hr_tasks"
+    },
+    {
+      "id": "hr-003",
+      "query": "I want to request three days of vacation next month.",
+      "expected_workflow": "hr_tasks"
+    },
+    {
+      "id": "hr-004",
+      "query": "When will I get my pay slip for this month?",
+      "expected_workflow": "hr_tasks"
+    },
+
+    {
+      "id": "medical-qa-001",
+      "query": "What are the common side effects of ibuprofen?",
+      "expected_workflow": "medical_qa"
+    },
+    {
+      "id": "medical-qa-002",
+      "query": "What does a high blood pressure reading mean?",
+      "expected_workflow": "medical_qa"
+    },
+    {
+      "id": "medical-qa-003",
+      "query": "How is type 2 diabetes typically treated?",
+      "expected_workflow": "medical_qa"
+    },
+
+    {
+      "id": "medical-appt-001",
+      "query": "I need to book an appointment with a cardiologist for chest pain.",
+      "expected_workflow": "medical_appointment"
+    },
+    {
+      "id": "medical-appt-002",
+      "query": "Schedule a dermatologist appointment for next week.",
+      "expected_workflow": "medical_appointment"
+    },
+
+    {
+      "id": "university-001",
+      "query": "When is the deadline to drop a course this semester?",
+      "expected_workflow": "university"
+    },
+    {
+      "id": "university-002",
+      "query": "How do I apply for a research grant?",
+      "expected_workflow": "university"
+    },
+    {
+      "id": "university-003",
+      "query": "What's my GPA requirement to keep my scholarship?",
+      "expected_workflow": "university"
+    },
+    {
+      "id": "university-004",
+      "query": "Who is my academic advisor and how do I reach them?",
+      "expected_workflow": "university"
+    }
+  ]
+}

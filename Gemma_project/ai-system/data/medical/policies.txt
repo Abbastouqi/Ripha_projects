@@ -1,0 +1,29 @@
+POLICY 001 - Appointment Booking General Rules
+All patients must be registered in the system before booking a standard appointment. New patients may book a first-visit appointment as a guest. Photo ID and insurance card must be presented at first visit. Appointments are available Monday through Friday during business hours unless otherwise specified by the specialist.
+
+POLICY 002 - Routine vs Urgent Appointment Classification
+Routine appointments are for non-emergency conditions where the patient can wait 1-5 business days. Urgent appointments are for conditions requiring attention within 24-48 hours such as worsening pain, new neurological symptoms, or post-surgical concerns. Emergency conditions must be directed to the emergency department immediately. The intake AI will classify urgency based on reported symptoms.
+
+POLICY 003 - Specialist Referral Requirements
+A referral from a general practitioner is required for neurology appointments. Cardiology appointments for chest pain may be booked directly if the patient reports chest pain or palpitations. Orthopedic appointments may be booked directly for acute injuries. All referrals must include the referring doctor's name and the reason for referral.
+
+POLICY 004 - Appointment Cancellation Policy
+Appointments must be cancelled at least 24 hours in advance to avoid a no-show fee. Cancellations within 24 hours are subject to a $50 administrative fee unless due to medical emergency. Three consecutive no-shows without notification result in a temporary booking suspension. To cancel, call 555-HOSPITAL or use the patient portal.
+
+POLICY 005 - Cardiology Appointment Guidelines
+Cardiology appointments are available with Dr. Amanda Carter, Monday through Friday 9am-5pm. Patients reporting active chest pain, shortness of breath at rest, or irregular heartbeat should be flagged as urgent. Patients must not eat or drink anything except water for 4 hours before stress tests. Bring a list of all current medications to every cardiology visit.
+
+POLICY 006 - Neurology Appointment Guidelines
+Neurology appointments are with Dr. James Patel, Monday, Wednesday, and Friday 10am-4pm. New patient neurology consultations require a referral from a GP. Patients with new-onset seizures or sudden severe headache should be sent to emergency. Patients should bring prior MRI or CT scan results if available. Appointment duration is 45-60 minutes for first visits.
+
+POLICY 007 - Orthopedics Appointment Guidelines
+Orthopedic appointments are with Dr. Lisa Thompson, Tuesday and Thursday 8am-3pm. X-rays are typically required before orthopedic consultations. Patients with suspected fractures should go to emergency or urgent care first. Post-surgical follow-up appointments are priority-booked. Bring any previous imaging results including X-rays, MRI, or CT scans.
+
+POLICY 008 - General Practice Appointment Guidelines
+General practice appointments are with Dr. Robert Kim, Monday through Friday 8am-6pm. Annual health checkups, prescription renewals, referrals, and minor illness consultations are handled in general practice. Same-day appointments may be available for acute illness. Patients should fast for 8 hours before any blood work ordered at the appointment.
+
+POLICY 009 - Insurance and Payment Policy
+The hospital accepts most major insurance plans. Patients must present their insurance card and photo ID at each visit. Co-payments are due at time of service. For uninsured patients, a self-pay discount of 20% is applied. Pre-authorization may be required for specialist visits depending on insurance plan. The billing department can be reached at billing@hospital.example.
+
+POLICY 010 - Patient Data Privacy
+All patient information is protected under HIPAA regulations. Patient data is never shared with third parties without explicit written consent except as required by law. AI-assisted booking systems process only the minimum necessary information. Patients have the right to request a copy of their records at any time. Data retention follows a minimum 7-year policy per regulatory requirements.
